@@ -16,6 +16,6 @@ const userSchema = mongoose.Schema({
   wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "game" }],
 });
 
-const User = mongoose.model("users", gameSchema);
+const User = mongoose.model("users", userSchema);
 
 module.exports = User;
