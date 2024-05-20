@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const connectionString = process.env.CONNECTION_STRING;
+const connectionString = process.env.CONNECTION_STRING
 
 // don't forget to use your own connectionString to exploit the database
 // set it as an env.
