@@ -17,7 +17,7 @@ const expandedContentListSchema = mongoose.Schema({
 
 // GAME SCHEMA
 
-    //ratingSummary allows the perfomance to relieve by using a simpler calculation each time a percentage is generated
+    //ratingSummary allows a performance relieve by using a simpler calculation each time a percentage is generated
 
     //trace all the ratings with the "rating" key in order to display data
     //as there's potentially many ratings, usage of an array to call the key
