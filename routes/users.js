@@ -12,7 +12,7 @@ router.post('/signup', (req, res) => {
 })
 
 // Vérifions maintenant que l'utilisateur n'est pas déjà enregistré
-User.findOne({ username: $regex: new Regexp(req.body.username, 'i') }).then(data => {
+User.findOne({ username: { $regex: new Regexp(req.body.username, 'i') } }).then(data => {
   if (data === null) {
     // Si nous n'avons pas trouvé de "username" ( data === null), alors nous pour créer un nouvel utilisateur.
     const hash = bcrypt.hashSync(req.body.password, 10);
