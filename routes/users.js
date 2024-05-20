@@ -10,11 +10,17 @@ const uid2 = require("uid2");
 
 // Nous vérifions ici que tous les champs soient bien remplis afin que l'inscription utilisateur soit possible.
 router.post("/signup", (req, res) => {
-  if (!checkBody(req.body, ["username", "email", "password"])) {
+  if (!checkBody(req.body, ["username", "email", "password", "confirmPassword"])) {
     res.json({ result: "false", error: "Missing or empty fields" });
     return;
   }
 
+// Comparaison du mot de passe écrit par l'utilisateur et sa confirmation
+
+  if (req.body.password !== req.body.confirmPassword) {
+    res.json({ result: false, error: "Passwords do not match" });
+    return;
+  }
   // Vérifions maintenant que l'utilisateur n'est pas déjà enregistré
   User.findOne({
     username: { $regex: new RegExp(req.body.username, "i") },
