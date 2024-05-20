@@ -10,8 +10,8 @@ const mongoose = require("mongoose");
 //many categories hence the array
 
 const ratingSchema = mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
-  game: { type: mongoose.Schema.Types.ObjectId, ref: "game" },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
+  game: { type: mongoose.Schema.Types.ObjectId, ref: "games" },
   category: { type: [String], default: ["general"] },
   rating: Number,
   ratingMode: String,

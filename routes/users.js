@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 require('../models/connection');
 
-const User = require('../models/user');
+const User = require('../models/users');
 
 
 const { checkBody } = require('../modules/checkBody');
@@ -25,6 +25,7 @@ router.post('/signup', (req, res) => {
 
       const newUser = new User({
         username: req.body.username,
+        email: req.body.email,
         password: hash,
         token: uid2(32),
       })
@@ -38,6 +39,24 @@ router.post('/signup', (req, res) => {
       res.json({ result: false, error: "User already registered" })
     }
   })
+
+router.post('/signin', (req, res) => {
+    
+    //la connexion est conditionnée par le renseignement de tous les champs
+    if (!checkBody(req.body, ['username', 'password', 'email'])) {
+      res.json({ result: false, error: 'Missing or empty fields' });
+      return;
+    }
+  
+    //la route compare le mot de passe renseigné par l'utilisateur avec le procédé de hachage
+    User.findOne({ username: { $regex: new RegExp(req.body.username, 'i') } }).then(data => {
+      if (data && bcrypt.compareSync(req.body.password, data.password)) {
+        res.json({ result: true, token: data.token, username: data.username, email: data.email });
+      } else {
+        res.json({ result: false, error: 'User not found or wrong password' });
+      }
+    });
+  });
 
 });
 

@@ -12,8 +12,8 @@ const userSchema = mongoose.Schema({
   password: String,
   token: String,
   avatar: String,
-  ratings: [{ type: mongoose.Schema.Types.ObjectId, ref: "rating" }],
-  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "game" }],
+  ratings: [{ type: mongoose.Schema.Types.ObjectId, ref: "ratings" }],
+  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "games" }],
 });
 
 const User = mongoose.model("users", userSchema);

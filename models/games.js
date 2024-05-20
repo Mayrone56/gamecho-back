@@ -7,7 +7,7 @@ const expandedContentListSchema = mongoose.Schema({
   description: String,
   name: String,
   releasedDate: Date,
-  ratingsID: [{ type: mongoose.Schema.Types.ObjectId, ref: "rating" }],
+  ratingsID: [{ type: mongoose.Schema.Types.ObjectId, ref: "ratings" }],
   imageGame: String,
   ratingSummary: {
     averageRating: { type: Number },
@@ -18,7 +18,7 @@ const expandedContentListSchema = mongoose.Schema({
 // GAME SCHEMA
 
     //ratingSummary allows the perfomance to relieve by using a simpler calculation each time a percentage is generated
-    
+
     //trace all the ratings with the "rating" key in order to display data
     //as there's potentially many ratings, usage of an array to call the key
 
@@ -34,7 +34,7 @@ const gameSchema = mongoose.Schema({
   isOnline: Boolean,
   isExpandedContent: Boolean,
   expandedContentList: [expandedContentListSchema],
-  ratingsID: [{ type: mongoose.Schema.Types.ObjectId, ref: "rating" }],
+  ratingsID: [{ type: mongoose.Schema.Types.ObjectId, ref: "ratings" }],
   imageGame: String,
   ratingSummary: {
     averageRating: { type: Number },
