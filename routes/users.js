@@ -40,7 +40,7 @@ router.post('/signup', (req, res) => {
     }
   })
 
-});
+
 
 
 
@@ -75,10 +75,12 @@ User.findOne({
   }
 });
 
+});
+
 
 router.post("/signin", (req, res) => {
   //la connexion est conditionnée par le renseignement de tous les champs
-  if (!checkBody(req.body, ["username", "password", "email"])) {
+  if (!checkBody(req.body, ["username", "password"])) {
     res.json({ result: false, error: "Missing or empty fields" });
     return;
   }
