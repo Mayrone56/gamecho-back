@@ -2,7 +2,7 @@ var express = require("express");
 var router = express.Router();
 require('../models/connection');
 
-const User = require('../models/user');
+const User = require('../models/users');
 
 
 const { checkBody } = require('../modules/checkBody');
@@ -40,7 +40,7 @@ router.post('/signup', (req, res) => {
     }
   })
 
-});
+
 
 
 
@@ -73,6 +73,8 @@ User.findOne({
     // Si l'utilisateur existe déjà, nous retournons une réponse à false.
     res.json({ result: false, error: "User already registered" });
   }
+});
+
 });
 
 
