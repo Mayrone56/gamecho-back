@@ -4,6 +4,8 @@ var router = express.Router();
 const Game = require('../models/games')
 const User = require('../models/users')
 
+const API_KEY = "ba83b7607f484a688e2ff6104e8f5e5f"
+
 // Cette route servira à rajouter des jeux à notre wishlist
 // A TERMINER!!!!!!! API???
 router.post('/', (req, res) => {
@@ -11,7 +13,7 @@ router.post('/', (req, res) => {
   Game.findOne({ gameName: { $regex: new RegExp(req.body.gameName, 'i') } }).then(MongoData => {
     if (MongoData === null) {
       // Si le jeu n'est pas trouvé dans notre base de donnée, on va récupérer l'info grâce à une API
-      fetch('...')
+      fetch(`https://api.rawg.io/api/games?key=${API_KEY}`)
         .then(response => response.json())
         // Attention à cette étape, nous stockons notre jeu sous forme d'objet correspondant
         // aux couples clés/valeurs de notre modèle "games"
