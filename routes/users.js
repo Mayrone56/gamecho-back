@@ -74,7 +74,7 @@ User.findOne({
     res.json({ result: false, error: "User already registered" });
   }
 });
-});
+
 
 router.post("/signin", (req, res) => {
   //la connexion est conditionnée par le renseignement de tous les champs
