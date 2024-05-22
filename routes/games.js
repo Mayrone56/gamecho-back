@@ -4,14 +4,12 @@ var router = express.Router();
 const Game = require('../models/games')
 const User = require('../models/users')
 
-const API_KEY = "ba83b7607f484a688e2ff6104e8f5e5f"
-
 
 router.get('/games', (req, res) => {
   fetch(`https://api.rawg.io/api/games?key=${API_KEY}`)
     .then(response => response.json())
     .then(data => {
-      if (data.status === "ok") {
+      if (data) {
         res.json({ games: data.results })
       } else {
         res.json({ games: [] })
