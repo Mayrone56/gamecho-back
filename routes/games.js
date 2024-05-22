@@ -4,7 +4,7 @@ var router = express.Router();
 const Game = require('../models/games')
 const User = require('../models/users')
 
-const API_KEY = "ba83b7607f484a688e2ff6104e8f5e5f"
+const API_KEY = process.env.API_KEY;
 
 // Cette route servira à rajouter des jeux à notre wishlist
 // A TERMINER!!!!!!! API???
