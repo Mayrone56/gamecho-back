@@ -4,7 +4,25 @@ var router = express.Router();
 const Game = require('../models/games')
 const User = require('../models/users')
 
-const API_KEY = "ba83b7607f484a688e2ff6104e8f5e5f"
+const API_KEY = process.env.API_KEY
+
+router.get('/', (req, res) => {
+  fetch(`https://api.rawg.io/api/games?key=${API_KEY}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data) {
+        const formatedGame = {
+          name: data.name,
+          image: data.background_image
+
+        }
+        res.json({ result: true, games: data.results })
+      } else {
+        res.json({ games: [] })
+      }
+    });
+});
+
 
 // Cette route servira à rajouter des jeux à notre wishlist
 // A TERMINER!!!!!!! API???
