@@ -12,14 +12,14 @@ const uid2 = require("uid2");
 router.post("/signup", (req, res) => {
   if (!checkBody(req.body, ["username", "email", "password"])) {
     res.json({ result: "false", error: "Missing or empty fields" });
-    return; // ajout d'un return à CHAQUE réponse pour réponses multiples
+    return; // ajout d'un return à CHAQUE réponse pour empêcher réponses multiples
   }
 
   // Comparaison du mot de passe écrit par l'utilisateur et sa confirmation
 
   if (req.body.password !== req.body.confirmPassword) {
     res.json({ result: false, error: "Passwords do not match" });
-    return; // ajout d'un return à CHAQUE réponse pour réponses multiples
+    return; // ajout d'un return à CHAQUE réponse pour empêcher réponses multiples
   }
   // Vérifions maintenant que l'utilisateur n'est pas déjà enregistré
   User.findOne({
@@ -38,12 +38,12 @@ router.post("/signup", (req, res) => {
 
       newUser.save().then((newDoc) => {
         res.json({ result: true, token: newDoc.token });
-        return; // ajout d'un return à CHAQUE réponse pour réponses multiples
+        return; // ajout d'un return à CHAQUE réponse pour empêcher réponses multiples
       });
     } else {
       // Si l'utilisateur existe déjà, nous retournons une réponse à false.
       res.json({ result: false, error: "User already registered" });
-      return; // ajout d'un return à CHAQUE réponse pour réponses multiples
+      return; // ajout d'un return à CHAQUE réponse pour empêcher réponses multiples
     }
   });
 });
