@@ -6,32 +6,32 @@ const User = require('../models/users')
 
 const API_KEY = process.env.API_KEY
 
-router.get('/', (req, res) => {
-  fetch(`https://api.rawg.io/api/games?key=${API_KEY}`)
-    .then(response => response.json())
-    .then(data => {
-      if (data) {
-        const formatedGame = {
-          name: data.name,
-          image: data.background_image
+// router.get('/', (req, res) => {
+//   fetch(`https://api.rawg.io/api/games?key=${API_KEY}`)
+//     .then(response => response.json())
+//     .then(data => {
+//       if (data) {
+//         const formatedGame = {
+//           name: data.name,
+//           image: data.background_image
 
-        }
-        res.json({ result: true, games: data.results })
-      } else {
-        res.json({ games: [] })
-      }
-    });
-});
+//         }
+//         res.json({ result: true, games: data.results })
+//       } else {
+//         res.json({ games: [] })
+//       }
+//     });
+// });
 
 
 // Cette route servira à rajouter des jeux à notre wishlist
 // A TERMINER!!!!!!! API???
-router.post('/', (req, res) => {
+router.post('/games', (req, res) => {
   // Nous vérifions tout d'abord si le jeu existe ou non dans notre database
   Game.findOne({ gameName: { $regex: new RegExp(req.body.gameName, 'i') } }).then(MongoData => {
     if (MongoData === null) {
       // Si le jeu n'est pas trouvé dans notre base de donnée, on va récupérer l'info grâce à une API
-      fetch(`https://api.rawg.io/api/games?key=${API_KEY}`)
+      fetch(`https://api.rawg.io/api/{req.body.gameName}?key=${API_KEY}`)
         .then(response => response.json())
         // Attention à cette étape, nous stockons notre jeu sous forme d'objet correspondant
         // aux couples clés/valeurs de notre modèle "games"
@@ -58,7 +58,7 @@ router.post('/', (req, res) => {
 // Ensuite, cette route sera appelée dans notre composant Wishlist côté Front.
 // A TERMINER !!!!
 
-router.get('/game/:username/:', (req, res) => {
+router.get('/games/:username/:', (req, res) => {
   // La première étape consiste à savoir si l'utilisateur existe bel et bien.
   User.findOne({ username: req.params.username }).then(user => {
     if (user === null) {
