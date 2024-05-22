@@ -4,9 +4,10 @@ const bcrypt = require('bcrypt');
 const hash = bcrypt.hashSync('password', 10);
 const uid2 = require('uid2');
 
+const API_KEY = process.env.API_KEY
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
+router.get('/', function (req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
