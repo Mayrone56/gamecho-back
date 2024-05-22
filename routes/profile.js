@@ -8,7 +8,8 @@ const path = require("path"); // à exploiter pour extraire l'extension de l'ima
 //ne peut fonctionner sans le module fileupload, ne pas oublier de yarn install
 
 router.post("/avatar", async (req, res) => {
-  const photoPath = `./tmp/${uniqid()}.gif`; // possibilité de remplacer l'extension => le but est d'accepter tout type d'image
+  const fileExtension = path.extname(req.files.avatar.name); // path = module qui permet d'exploiter l'extension d'un fichier, ici utilisé avec la méthode extname() pour extraire / req.files.avatar.name pour cibler le nom envoyé par le front
+  const photoPath = `./tmp/${uniqid()}${fileExtension}`; // possibilité de remplacer l'extension => le but est d'accepter tout type d'image
   // création du dossier tmp en amont
   if (req.files && req.files.avatar) {
     // si aucun fichier temporaire n'est extrait, arrêt du code
