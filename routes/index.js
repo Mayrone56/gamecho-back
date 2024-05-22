@@ -8,7 +8,7 @@ const API_KEY = process.env.API_KEY;
 //console.log(API_KEY);
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
+router.get('/', function (req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
