@@ -3,7 +3,7 @@ var router = express.Router();
 const fetch = require("node-fetch");
 const Game = require("../models/games");
 const User = require("../models/users");
-
+const moment = require('moment')
 const API_KEY = process.env.API_KEY;
 
 // const moby_key = "moby_IflJKWa2Gpp3OGqFDaxD2018NKt"
@@ -212,19 +212,35 @@ router.post("/search", async (req, res) => {
   return res.json({ result: true, games: savedGames });
 });
 
-router.get("/latestrelease", async (req, res) => {
+router.get("/latestreleased", async (req, res) => {
 
   // Requête à l'API pour rechercher les derniers jeux sortis en filtrant la date
   const datedGames = await fetch(`https://api.rawg.io/api/games?key=${API_KEY}?dates`);
-
+  // Conversion en .json (contraction .then présentée par Valentin)
   const latestgames = await datedGames.json();
-  console.log(latestgames.length)
+  // La date du jeu doit être antérieure à la date définie dans la méthode moment.
+  const filteredgameDates = latestgames.results.released < moment([2024, 4, 1]).fromNow();
+  // Si le nombre de jeux trouvé est inférieur à 10, alors nous affichons l'objet gameCard créé ici-même.
+  if (filteredgameDates.length > 10) {
+    return
+  } else {
+    const gameCard = new Game({
+      name: latestgames.results.name,
+      releasedDate: latestgames.results.released,
+      imageGame: latestgames.results.background_image,
+    });
+    const datedGame = gameCard.save()
+  };
+
+  return res.json({ result: true, gameCard })
+
+
+  // console.log(latestgames.results.released)
+  // console.log(latestgames.length)
   // const date = moment().format("YYYY-MM-DD");
 
-  const today = new Date();
-  console.log(today);
-
-
+  // const today = new Date();
+  // console.log(today);
 
   // format() {
   //   var options = {year: 'numeric', month: 'numeric', day: 'numeric'}
