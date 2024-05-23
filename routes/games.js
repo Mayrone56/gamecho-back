@@ -212,47 +212,22 @@ router.post("/search", async (req, res) => {
   return res.json({ result: true, games: savedGames });
 });
 
-// router.get("/:cityName", (req, res) => {
-//   City.findOne({
-//     cityName: { $regex: new RegExp(req.params.cityName, "i") },
-//   }).then((data) => {
-//     if (data) {
-//       res.json({ result: true, weather: data });
-//     } else {
-//       res.json({ result: false, error: "City not found" });
-//     }
-//   });
-// });
+router.get("/latestrelease", async (req, res) => {
 
-// router.delete("/:cityName", (req, res) => {
-//   City.deleteOne({
-//     cityName: { $regex: new RegExp(req.params.cityName, "i") },
-//   }).then((deletedDoc) => {
-//     if (deletedDoc.deletedCount > 0) {
-//       // document successfully deleted
-//       City.find().then((data) => {
-//         res.json({ result: true, weather: data });
-//       });
-//     } else {
-//       res.json({ result: false, error: "City not found" });
-//     }
-//   });
-// });
+  // Requête à l'API pour rechercher les derniers jeux sortis en filtrant la date
+  const datedGames = await fetch(`https://api.rawg.io/api/games?key=${API_KEY}?dates`);
 
-router.get("/", async (req, res) => {
-  fetch(`https://api.rawg.io/api/games?key=${API_KEY}`)
-    .then((response) => response.json())
-    .then((data) => {
-      if (data) {
-        const formatedGame = {
-          name: data.name,
-          image: data.background_image,
-        };
-        res.json({ result: true, games: data.results });
-      } else {
-        res.json({ games: [] });
-      }
-    });
+
+
+  // format() {
+  //   var options = {year: 'numeric', month: 'numeric', day: 'numeric'}
+  //   return new Date().toLocaleDateString([], options);
+  // };
+
+
+  const latestgames = await datedGames.json();
+
+  console.log(latestgames)
 });
 
 // Cette route servira à rajouter des jeux à notre wishlist
