@@ -21,12 +21,7 @@ router.get("/search", async (req, res) => {
   const gameSearchResult = await fetch(
     `https://api.rawg.io/api/games?key=${API_KEY}&search=${name}&page_size=100`
   );
-<<<<<<< HEAD
-  const searchData = await gameSearchResult.json(); // response => response.json de manière contractée
-  console.log(searchData);
-=======
   // Voir page size 
->>>>>>> main
 
 
   const searchData = await gameSearchResult.json();
@@ -43,24 +38,10 @@ router.get("/search", async (req, res) => {
   // Filtrer les résultats pour exclure les jeux amateurs (avec un nombre minimal de critiques ?)
   // const filteredByPopularity = filteredResults.filter((game) => game.reviews_count > 100); // exclut les jeux avec moins de 100 critiques
 
-<<<<<<< HEAD
-// Filtrer les résultats pour exclure les jeux amateurs type (avec un nombre minimal de critiques ?)
-const filteredByPopularity = filteredResults.filter((game) => game.reviews_count > 100); // exclut les jeux avec moins de 100 critiques
-
-// Vérifie s'il y a des résultats filtrés
-if (!filteredByPopularity || filteredByPopularity.length === 0) {
-  return res.json({ result: false, error: "Aucun jeu trouvé avec le nom spécifié" });
-} 
-
-// EXTRACTION DE CHAQUE ID GAME
-
-
-=======
   // Vérifie s'il y a des résultats filtrés
   if (!searchData.results || searchData.results.length === 0) {
     return res.json({ result: false, error: "Aucun jeu trouvé avec le nom spécifié" });
   }
->>>>>>> main
   // Extraction de la clé ID pour fetcher la route qui détaille les jeux
   const gameIDs = searchData.results.slice(0, 10).map((game) => game.id); // pour une recherche, on limite à 10 jeux pour l'instant à modifier si bouton +
   console.log(gameIDs);
