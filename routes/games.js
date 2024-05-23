@@ -14,15 +14,17 @@ router.get("/search", async (req, res) => {
   const { name } = req.query;
   console.log(name);
 
-  // Requête pour rechercher une liste de jeux basée sur le nom
+  // REQUÊTE DE LA LISTE PRINCIPALE
+
   const gameSearchResult = await fetch(
     `https://api.rawg.io/api/games?key=${API_KEY}&search=${name}`
   );
-  const searchData = await gameSearchResult.json();
+  const searchData = await gameSearchResult.json(); // response => response.json de manière contractée
   console.log(searchData);
 
   // Vérifie s'il y a des résultats de recherche
   if (!searchData.results || searchData.results.length === 0) {
+    console.log(result, error) // console.log AVANT le return
     return res.json({ result: false, error: "Aucun jeu trouvé" });
   }
 
@@ -31,13 +33,17 @@ router.get("/search", async (req, res) => {
     game.name.toLowerCase().includes(name.toLowerCase()) // sans cette fonction, les jeux donnés en réponse n'étaient pas pertinent
   );
 
-// Filtrer les résultats pour exclure les jeux amateurs (avec un nombre minimal de critiques ?)
+// Filtrer les résultats pour exclure les jeux amateurs type (avec un nombre minimal de critiques ?)
 const filteredByPopularity = filteredResults.filter((game) => game.reviews_count > 100); // exclut les jeux avec moins de 100 critiques
 
 // Vérifie s'il y a des résultats filtrés
 if (!filteredByPopularity || filteredByPopularity.length === 0) {
   return res.json({ result: false, error: "Aucun jeu trouvé avec le nom spécifié" });
-}
+} 
+
+// EXTRACTION DE CHAQUE ID GAME
+
+
   // Extraction de la clé ID pour fetcher la route qui détaille les jeux
   const gameIDs = filteredResults.slice(0, 10).map((game) => game.id); // pour une recherche, on limite à 10 jeux pour l'instant à modifier si bouton +
   console.log(gameIDs);
@@ -102,7 +108,7 @@ if (!filteredByPopularity || filteredByPopularity.length === 0) {
         averageRating: 0, // À calculer lors d'un vote
         numberOfRatings: 0, // À calculer lors d'un vote
       },
-    };
+    }; // FIN DE LA VARIABLE FORMATTEDGAME
 
     // Ajoute les détails du jeu à la liste des jeux sauvegardés
     savedGames.push(formattedGame);
