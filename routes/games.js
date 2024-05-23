@@ -217,6 +217,13 @@ router.get("/latestrelease", async (req, res) => {
   // Requête à l'API pour rechercher les derniers jeux sortis en filtrant la date
   const datedGames = await fetch(`https://api.rawg.io/api/games?key=${API_KEY}?dates`);
 
+  const latestgames = await datedGames.json();
+  console.log(latestgames.length)
+  // const date = moment().format("YYYY-MM-DD");
+
+  const today = new Date();
+  console.log(today);
+
 
 
   // format() {
@@ -224,10 +231,6 @@ router.get("/latestrelease", async (req, res) => {
   //   return new Date().toLocaleDateString([], options);
   // };
 
-
-  const latestgames = await datedGames.json();
-
-  console.log(latestgames)
 });
 
 // Cette route servira à rajouter des jeux à notre wishlist
