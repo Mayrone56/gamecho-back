@@ -6,22 +6,55 @@ const User = require('../models/users')
 
 const API_KEY = process.env.API_KEY
 
-router.get('/', (req, res) => {
-  fetch(`https://api.rawg.io/api/games?key=${API_KEY}`)
-    .then(response => response.json())
-    .then(data => {
-      if (data) {
-        const formatedGame = {
-          name: data.name,
-          image: data.background_image
-
-        }
-        res.json({ result: true, games: data.results })
-      } else {
-        res.json({ games: [] })
-      }
-    });
+//TEST AVEC MYMOVIES qui marche
+router.get('/movies', (req, res) => {
+	fetch(`https://api.rawg.io/api/games?key=${API_KEY}&page_size=5`)
+	fetch(`https://api.themoviedb.org/3/discover/movie?api_key=d6677bc9037e48939f077e8ecbe537bb`)
+		.then(response => response.json())
+		.then(data => {
+			res.json({ movies: data.results });
+		});
 });
+
+// //TEST AVEC GAMES
+// router.get('/movies', (req, res) => {
+//   fetch(`https://api.rawg.io/api/games?key=${API_KEY}&page_size=5`)
+//   .then(response => {
+//     if (!response.ok) {
+//       throw new Error('Network response was not ok');
+//     }
+//     return response.json();
+//   })
+//   .then(data => {
+//     const games = data.results.map(game => ({
+//       name: game.name,
+//       background_image: game.background_image
+//     }));
+//     res.json(games);
+//   })
+//   .catch(error => {
+//     res.status(500).json({ error: 'Something went wrong' });
+//   });
+// });
+
+
+//ROUTE AVANT QUE JE TOUCHE
+// router.get('/', (req, res) => {
+//   fetch(`https://api.rawg.io/api/games?key=${API_KEY}`)
+//     .then(response => response.json())
+//     .then(data => {
+//       if (data) {
+//         const formatedGame = {
+//           name: data.name,
+//           image: data.background_image
+
+//         }
+//         res.json({ result: true, games: data.results })
+//       } else {
+//         res.json({ games: [] })
+//       }
+//     });
+// });
 
 
 // Cette route servira à rajouter des jeux à notre wishlist
