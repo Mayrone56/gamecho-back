@@ -6,6 +6,8 @@ const User = require("../models/users");
 
 const API_KEY = process.env.API_KEY;
 
+// const moby_key = "moby_IflJKWa2Gpp3OGqFDaxD2018NKt"
+
 // NE PAS OUBLIER de renseigner sa clé RAWG API_KEY dans le fichier .env
 
 
@@ -16,30 +18,30 @@ router.get("/search", async (req, res) => {
 
   // Requête pour rechercher une liste de jeux basée sur le nom
   const gameSearchResult = await fetch(
-    `https://api.rawg.io/api/games?key=${API_KEY}&search=${name}`
+    `https://api.rawg.io/api/games?key=${API_KEY}&search=${name}&page_size=100`
   );
-  const searchData = await gameSearchResult.json();
-  console.log(searchData);
+  // Voir page size 
 
+
+  const searchData = await gameSearchResult.json();
+  console.log(searchData.results.length)
   // Vérifie s'il y a des résultats de recherche
   if (!searchData.results || searchData.results.length === 0) {
     return res.json({ result: false, error: "Aucun jeu trouvé" });
   }
-
   // Filtrer les résultats pour ne conserver que ceux dont le nom contient la chaîne de recherche
   const filteredResults = searchData.results.filter((game) =>
     game.name.toLowerCase().includes(name.toLowerCase()) // sans cette fonction, les jeux donnés en réponse n'étaient pas pertinent
   );
+  // Filtrer les résultats pour exclure les jeux amateurs (avec un nombre minimal de critiques ?)
+  // const filteredByPopularity = filteredResults.filter((game) => game.reviews_count > 100); // exclut les jeux avec moins de 100 critiques
 
-// Filtrer les résultats pour exclure les jeux amateurs (avec un nombre minimal de critiques ?)
-const filteredByPopularity = filteredResults.filter((game) => game.reviews_count > 100); // exclut les jeux avec moins de 100 critiques
-
-// Vérifie s'il y a des résultats filtrés
-if (!filteredByPopularity || filteredByPopularity.length === 0) {
-  return res.json({ result: false, error: "Aucun jeu trouvé avec le nom spécifié" });
-}
+  // Vérifie s'il y a des résultats filtrés
+  if (!searchData.results || searchData.results.length === 0) {
+    return res.json({ result: false, error: "Aucun jeu trouvé avec le nom spécifié" });
+  }
   // Extraction de la clé ID pour fetcher la route qui détaille les jeux
-  const gameIDs = filteredResults.slice(0, 10).map((game) => game.id); // pour une recherche, on limite à 10 jeux pour l'instant à modifier si bouton +
+  const gameIDs = searchData.results.slice(0, 10).map((game) => game.id); // pour une recherche, on limite à 10 jeux pour l'instant à modifier si bouton +
   console.log(gameIDs);
 
   const savedGames = []; // tableau vide composé en aval des résultats pertinents
@@ -66,8 +68,8 @@ if (!filteredByPopularity || filteredByPopularity.length === 0) {
       releasedDate: gameDetailsData.released || "",
       platforms: gameDetailsData.platforms
         ? gameDetailsData.platforms
-            .map((platform) => platform.platform.name)
-            .join(", ") // après avoir fait le tour du tableau, on obtient une string jointe avec tous les éléments
+          .map((platform) => platform.platform.name)
+          .join(", ") // après avoir fait le tour du tableau, on obtient une string jointe avec tous les éléments
         : "",
       genre: gameDetailsData.genres
         ? gameDetailsData.genres.map((genre) => genre.name).join(", ") // même principe
@@ -86,16 +88,16 @@ if (!filteredByPopularity || filteredByPopularity.length === 0) {
         gameDetailsData.additions && gameDetailsData.additions.length > 0, // si présence d'au moins une extension, condition
       expandedContentList: gameDetailsData.additions
         ? gameDetailsData.additions.map((expandedContent) => ({
-            description: expandedContent.description || "",
-            name: expandedContent.name || "",
-            releasedDate: expandedContent.released || "",
-            ratingsID: [], // À remplir séparément via les updates (lors d'un vote)
-            imageGame: expandedContent.background_image || "",
-            ratingSummary: {
-              averageRating: 0, // À calculer lors d'un vote
-              numberOfRatings: 0, // À calculer lors d'un vote
-            },
-          }))
+          description: expandedContent.description || "",
+          name: expandedContent.name || "",
+          releasedDate: expandedContent.released || "",
+          ratingsID: [], // À remplir séparément via les updates (lors d'un vote)
+          imageGame: expandedContent.background_image || "",
+          ratingSummary: {
+            averageRating: 0, // À calculer lors d'un vote
+            numberOfRatings: 0, // À calculer lors d'un vote
+          },
+        }))
         : [],
       imageGame: gameDetailsData.background_image || "",
       ratingSummary: {
@@ -166,19 +168,13 @@ router.post("/search", async (req, res) => {
     const newGame = new Game({
       name: newGameData.name || "",
       description: newGameData.description || "",
-      developer:
-        newGameData.developers && newGameData.developers[0]
-          ? newGameData.developers[0].name
-          : "",
-      publisher:
-        newGameData.publishers && newGameData.publishers[0]
-          ? newGameData.publishers[0].name
-          : "",
+      developer: newGameData.developers ? newGameData.developers[0].name : "",
+      publisher: newGameData.publishers ? newGameData.publishers[0].name : "",
       releasedDate: newGameData.released || "",
       platforms: newGameData.platforms
         ? newGameData.platforms
-            .map((platform) => platform.platform.name)
-            .join(", ")
+          .map((platform) => platform.platform.name)
+          .join(", ")
         : "",
       genre: newGameData.genres
         ? newGameData.genres.map((genre) => genre.name).join(", ")
@@ -186,19 +182,20 @@ router.post("/search", async (req, res) => {
       isMultiplayer: isMultiplayer,
       isOnline: isOnline,
       isExpandedContent:
-        newGameData.additions && newGameData.additions.length > 0,
+        newGameData.additions && newGameData.additions.length > 1,
+
       expandedContentList: newGameData.additions
         ? newGameData.additions.map((expandedContent) => ({
-            description: expandedContent.description || "",
-            name: expandedContent.name || "",
-            releasedDate: expandedContent.released || "",
-            ratingsID: [], // Need to be populated separately
-            imageGame: expandedContent.background_image || "",
-            ratingSummary: {
-              averageRating: 0, // Need to be calculated
-              numberOfRatings: 0, // Need to be calculated
-            },
-          }))
+          description: expandedContent.description || "",
+          name: expandedContent.name || "",
+          releasedDate: expandedContent.released || "",
+          ratingsID: [], // Need to be populated separately
+          imageGame: expandedContent.background_image || "",
+          ratingSummary: {
+            averageRating: 0, // Need to be calculated
+            numberOfRatings: 0, // Need to be calculated
+          },
+        }))
         : [],
       imageGame: newGameData.background_image || "",
       ratingSummary: {
@@ -215,34 +212,34 @@ router.post("/search", async (req, res) => {
   return res.json({ result: true, games: savedGames });
 });
 
-router.get("/:cityName", (req, res) => {
-  City.findOne({
-    cityName: { $regex: new RegExp(req.params.cityName, "i") },
-  }).then((data) => {
-    if (data) {
-      res.json({ result: true, weather: data });
-    } else {
-      res.json({ result: false, error: "City not found" });
-    }
-  });
-});
+// router.get("/:cityName", (req, res) => {
+//   City.findOne({
+//     cityName: { $regex: new RegExp(req.params.cityName, "i") },
+//   }).then((data) => {
+//     if (data) {
+//       res.json({ result: true, weather: data });
+//     } else {
+//       res.json({ result: false, error: "City not found" });
+//     }
+//   });
+// });
 
-router.delete("/:cityName", (req, res) => {
-  City.deleteOne({
-    cityName: { $regex: new RegExp(req.params.cityName, "i") },
-  }).then((deletedDoc) => {
-    if (deletedDoc.deletedCount > 0) {
-      // document successfully deleted
-      City.find().then((data) => {
-        res.json({ result: true, weather: data });
-      });
-    } else {
-      res.json({ result: false, error: "City not found" });
-    }
-  });
-});
+// router.delete("/:cityName", (req, res) => {
+//   City.deleteOne({
+//     cityName: { $regex: new RegExp(req.params.cityName, "i") },
+//   }).then((deletedDoc) => {
+//     if (deletedDoc.deletedCount > 0) {
+//       // document successfully deleted
+//       City.find().then((data) => {
+//         res.json({ result: true, weather: data });
+//       });
+//     } else {
+//       res.json({ result: false, error: "City not found" });
+//     }
+//   });
+// });
 
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
   fetch(`https://api.rawg.io/api/games?key=${API_KEY}`)
     .then((response) => response.json())
     .then((data) => {
