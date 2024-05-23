@@ -313,4 +313,112 @@ router.delete("/wishlist", (req, res) => {
   });
 });
 
+router.get("/suggestions", async (req, res) => {
+  // Extrait la requête de recherche à partir des paramètres d'URL
+  const { name } = req.query;
+  console.log(name);
+
+  // REQUÊTE DE LA LISTE PRINCIPALE
+
+  const gameSearchResult = await fetch(
+    `https://api.rawg.io/api/games?key=${API_KEY}&search=${name}&page_size=100`
+  );
+  // Voir page size 
+
+
+  const searchData = await gameSearchResult.json();
+  console.log(searchData.results.length)
+  // Vérifie s'il y a des résultats de recherche
+  if (!searchData.results || searchData.results.length === 0) {
+    console.log(result, error) // console.log AVANT le return
+    return res.json({ result: false, error: "Aucun jeu trouvé" });
+  }
+  // Filtrer les résultats pour ne conserver que ceux dont le nom contient la chaîne de recherche
+  const filteredResults = searchData.results.filter((game) =>
+    game.name.toLowerCase().includes(name.toLowerCase()) // sans cette fonction, les jeux donnés en réponse n'étaient pas pertinent
+  );
+  // Filtrer les résultats pour exclure les jeux amateurs (avec un nombre minimal de critiques ?)
+  // const filteredByPopularity = filteredResults.filter((game) => game.reviews_count > 100); // exclut les jeux avec moins de 100 critiques
+
+  // Vérifie s'il y a des résultats filtrés
+  if (!searchData.results || searchData.results.length === 0) {
+    return res.json({ result: false, error: "Aucun jeu trouvé avec le nom spécifié" });
+  }
+  // Extraction de la clé ID pour fetcher la route qui détaille les jeux
+  const gameIDs = searchData.results.slice(0, 10).map((game) => game.id); // pour une recherche, on limite à 10 jeux pour l'instant à modifier si bouton +
+  console.log(gameIDs);
+
+  const savedGames = []; // tableau vide composé en aval des résultats pertinents
+
+  // Loop through each game ID and fetch its details
+  for (const gameID of gameIDs) {
+    const gameDetailsResponse = await fetch(
+      `https://api.rawg.io/api/games/${gameID}?key=${API_KEY}`
+    );
+    const gameDetailsData = await gameDetailsResponse.json();
+
+    // Formatage des données pour chaque jeu // si la clé n'existe pas, on la remplace par une string vide
+    const formattedGame = { // LA VRAIE DIFFICULTE
+      name: gameDetailsData.name || "",
+      description: gameDetailsData.description || "",
+      developer:
+        gameDetailsData.developers && gameDetailsData.developers.length > 0
+          ? gameDetailsData.developers[0].name // possibilité d'avoir plusieurs développeurs/éditeurs / Si présence d'au moins un, on récupère seulement le premier
+          : "",
+      publisher:
+        gameDetailsData.publishers && gameDetailsData.publishers.length > 0
+          ? gameDetailsData.publishers[0].name
+          : "",
+      releasedDate: gameDetailsData.released || "",
+      platforms: gameDetailsData.platforms
+        ? gameDetailsData.platforms
+          .map((platform) => platform.platform.name)
+          .join(", ") // après avoir fait le tour du tableau, on obtient une string jointe avec tous les éléments
+        : "",
+      genre: gameDetailsData.genres
+        ? gameDetailsData.genres.map((genre) => genre.name).join(", ") // même principe
+        : "",
+      isMultiplayer: // très perfectible, l'API contient plusieurs tags mais n'est pas correcte pour beaucoup de jeux
+        gameDetailsData.tags &&
+        gameDetailsData.tags.some((tag) =>
+          tag.name.toLowerCase().includes("multiplayer") // on cherche simplement un champ multiplayer sans être sensible à la casse
+        ),
+      isOnline: // pareil que pour isMultiplayer
+        gameDetailsData.tags &&
+        gameDetailsData.tags.some((tag) =>
+          tag.name.toLowerCase().includes("online")
+        ),
+      isExpandedContent:
+        gameDetailsData.additions && gameDetailsData.additions.length > 0, // si présence d'au moins une extension, condition
+      expandedContentList: gameDetailsData.additions
+        ? gameDetailsData.additions.map((expandedContent) => ({
+          description: expandedContent.description || "",
+          name: expandedContent.name || "",
+          releasedDate: expandedContent.released || "",
+          ratingsID: [], // À remplir séparément via les updates (lors d'un vote)
+          imageGame: expandedContent.background_image || "",
+          ratingSummary: {
+            averageRating: 0, // À calculer lors d'un vote
+            numberOfRatings: 0, // À calculer lors d'un vote
+          },
+        }))
+        : [],
+      imageGame: gameDetailsData.background_image || "",
+      ratingSummary: {
+        averageRating: 0, // À calculer lors d'un vote
+        numberOfRatings: 0, // À calculer lors d'un vote
+      },
+    }; // FIN DE LA VARIABLE FORMATTEDGAME
+
+    // Ajoute les détails du jeu à la liste des jeux sauvegardés
+    savedGames.push(formattedGame);
+  }
+
+  // Retourne les jeux formatés en tant que réponse
+  return res.json({ result: true, games: savedGames });
+});
+
+
+
 module.exports = router;
+
