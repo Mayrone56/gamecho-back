@@ -5,21 +5,22 @@ const Game = require("../models/games");
 const User = require("../models/users");
 
 const API_KEY = process.env.API_KEY;
-
+//const API_KEY="49462af3274041c3ad86df3caf7affee//"
+//console.log(API_KEY);
 // NE PAS OUBLIER de renseigner sa clé RAWG API_KEY dans le fichier .env
 
 
 router.get("/search", async (req, res) => {
   // Extrait la requête de recherche à partir des paramètres d'URL
   const { name } = req.query;
-  console.log(name);
+  console.log("NAME ", name);
 
   // Requête pour rechercher une liste de jeux basée sur le nom
   const gameSearchResult = await fetch(
     `https://api.rawg.io/api/games?key=${API_KEY}&search=${name}`
   );
   const searchData = await gameSearchResult.json();
-  console.log(searchData);
+  console.log("SEARCHDATA ", searchData);
 
   // Vérifie s'il y a des résultats de recherche
   if (!searchData.results || searchData.results.length === 0) {
@@ -40,7 +41,7 @@ if (!filteredByPopularity || filteredByPopularity.length === 0) {
 }
   // Extraction de la clé ID pour fetcher la route qui détaille les jeux
   const gameIDs = filteredResults.slice(0, 10).map((game) => game.id); // pour une recherche, on limite à 10 jeux pour l'instant à modifier si bouton +
-  console.log(gameIDs);
+  console.log("GAMEID ", gameIDs);
 
   const savedGames = []; // tableau vide composé en aval des résultats pertinents
 
@@ -117,7 +118,7 @@ if (!filteredByPopularity || filteredByPopularity.length === 0) {
 
 router.post("/search", async (req, res) => {
   const { name } = req.body; // destructuring the req.body (search field)
-  console.log(name);
+  console.log("NAME ", name);
 
   // vérifie la présence du jeu dans la BDD
   const alreadySavedGame = await Game.findOne({
@@ -132,7 +133,7 @@ router.post("/search", async (req, res) => {
     `https://api.rawg.io/api/games?key=${API_KEY}&search=${name}`
   );
   const searchData = await gameSearchResult.json();
-  console.log(searchData);
+  console.log("SEARCH ", searchData);
 
   // vérifie si un résultat s'affiche
   if (!searchData.results || searchData.results.length === 0) {
@@ -141,7 +142,7 @@ router.post("/search", async (req, res) => {
 
   // Extract the IDs of the first 10 games from the search results
   const gameIds = searchData.results.slice(0, 10).map((game) => game.id);
-  console.log(gameIds);
+  console.log("GAMEID ", gameIds);
 
   const savedGames = [];
 
