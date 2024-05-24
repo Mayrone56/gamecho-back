@@ -13,7 +13,6 @@ const moment = require("moment");
 
 // NE PAS OUBLIER de renseigner sa clé RAWG API_KEY dans le fichier .env
 
-
 router.get("/search", async (req, res) => {
   // Extrait la requête de recherche à partir des paramètres d'URL
   const { name } = req.query;
