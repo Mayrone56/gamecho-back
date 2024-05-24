@@ -3,8 +3,8 @@ var router = express.Router();
 const fetch = require("node-fetch");
 const Game = require("../models/games");
 const User = require("../models/users");
-
-const API_KEY = process.env.API_KEY;
+const moment = require('moment')
+const API_KEY = "ba83b7607f484a688e2ff6104e8f5e5f";
 
 // const moby_key = "moby_IflJKWa2Gpp3OGqFDaxD2018NKt"
 
@@ -214,47 +214,18 @@ router.post("/search", async (req, res) => {
   return res.json({ result: true, games: savedGames });
 });
 
-// router.get("/:cityName", (req, res) => {
-//   City.findOne({
-//     cityName: { $regex: new RegExp(req.params.cityName, "i") },
-//   }).then((data) => {
-//     if (data) {
-//       res.json({ result: true, weather: data });
-//     } else {
-//       res.json({ result: false, error: "City not found" });
-//     }
-//   });
-// });
+router.get("/latestreleased", async (req, res) => {
+  // Obtention de la date d'aujourd'hui au bon format.
+  const currentDate = moment().format("YYYY-MM-DD")
+  // Obtention de la date d'il y a 5 jours.
+  const oldDate = moment().subtract(3, 'days').format("YYYY-MM-DD");
 
-// router.delete("/:cityName", (req, res) => {
-//   City.deleteOne({
-//     cityName: { $regex: new RegExp(req.params.cityName, "i") },
-//   }).then((deletedDoc) => {
-//     if (deletedDoc.deletedCount > 0) {
-//       // document successfully deleted
-//       City.find().then((data) => {
-//         res.json({ result: true, weather: data });
-//       });
-//     } else {
-//       res.json({ result: false, error: "City not found" });
-//     }
-//   });
-// });
+  // Requête à l'API pour rechercher les derniers jeux sortis les 5 derniers jours
+  const datedGames = await fetch(`https://api.rawg.io/api/games?key=${API_KEY}&dates=${oldDate},${currentDate}&page_size=10`);
 
-router.get("/", async (req, res) => {
-  fetch(`https://api.rawg.io/api/games?key=${API_KEY}`)
-    .then((response) => response.json())
-    .then((data) => {
-      if (data) {
-        const formatedGame = {
-          name: data.name,
-          image: data.background_image,
-        };
-        res.json({ result: true, games: data.results });
-      } else {
-        res.json({ games: [] });
-      }
-    });
+  const latestgames = await datedGames.json();
+
+  res.json({ result: true, latestgames })
 });
 
 // Cette route servira à rajouter des jeux à notre wishlist

@@ -72,6 +72,12 @@ router.post("/signin", (req, res) => {
   });
 });
 
+router.delete("/delete", (req, res) => {
+  User.deleteOne({ username: User.username }).then(() => {
+    res.json({ result: true });
+  });
+});
+
 /* GET users listing. */
 // router.get('/', function(req, res, next) {
 //   res.send('respond with a resource');
