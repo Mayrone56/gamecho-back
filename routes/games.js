@@ -313,8 +313,6 @@ router.get("/latestreleased", async (req, res) => {
 
   res.json({ result: true, latestgames: savedGames });
 });
-//FIN TEST ROUTE LATEST RELEASES SANDRINE
-
 
 // Cette route servira à rajouter des jeux à notre wishlist
 // A TERMINER!!!!!!! API???
