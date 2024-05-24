@@ -4,7 +4,7 @@ const fetch = require("node-fetch");
 const Game = require("../models/games");
 const User = require("../models/users");
 const moment = require('moment')
-const API_KEY = "process.env.API_KEY";
+const API_KEY = "ba83b7607f484a688e2ff6104e8f5e5f";
 
 // const moby_key = "moby_IflJKWa2Gpp3OGqFDaxD2018NKt"
 
@@ -223,63 +223,68 @@ router.get("/latestreleased", async (req, res) => {
 
   const latestgames = await datedGames.json();
 
-  const savedGames = [];
+  // Le nouvel objet renvoi un tableau vide à l'appel de la route. 
 
   const formattedGame = { // LA VRAIE DIFFICULTE
-    name: latestgames.name || "",
-    description: latestgames.description || "",
+    name: latestgames.results.name || "",
+    description: latestgames.results.description || "",
     developer:
       latestgames.developers && latestgames.developers.length > 0
         ? latestgames.developers[0].name // possibilité d'avoir plusieurs développeurs/éditeurs / Si présence d'au moins un, on récupère seulement le premier
         : "",
     publisher:
-      latestgames.publishers && latestgames.publishers.length > 0
-        ? latestgames.publishers[0].name
+      latestgames.results.publishers && latestgames.results.publishers.length > 0
+        ? latestgames.results.publishers[0].name
         : "",
-    releasedDate: latestgames.released || "",
-    platforms: latestgames.platforms
-      ? latestgames.platforms
+    releasedDate: latestgames.results.released || "",
+    platforms: latestgames.results.platforms
+      ? latestgames.results.platforms
         .map((platform) => platform.platform.name)
         .join(", ") // après avoir fait le tour du tableau, on obtient une string jointe avec tous les éléments
       : "",
-    genre: latestgames.genres
-      ? latestgames.genres.map((genre) => genre.name).join(", ") // même principe
+    genre: latestgames.results.genres
+      ? latestgames.results.genres.map((genre) => genre.name).join(", ") // même principe
       : "",
     isMultiplayer: // très perfectible, l'API contient plusieurs tags mais n'est pas correcte pour beaucoup de jeux
-      latestgames.tags &&
-      latestgames.tags.some((tag) =>
+      latestgames.results.tags &&
+      latestgames.results.tags.some((tag) =>
         tag.name.toLowerCase().includes("multiplayer") // on cherche simplement un champ multiplayer sans être sensible à la casse
       ),
     isOnline: // pareil que pour isMultiplayer
-      latestgames.tags &&
-      latestgames.tags.some((tag) =>
+      latestgames.results.tags &&
+      latestgames.results.tags.some((tag) =>
         tag.name.toLowerCase().includes("online")
       ),
     isExpandedContent:
-      latestgames.additions && latestgames.additions.length > 0, // si présence d'au moins une extension, condition
-    expandedContentList: latestgames.additions
-      ? latestgames.additions.map((expandedContent) => ({
-        description: expandedContent.description || "",
-        name: expandedContent.name || "",
-        releasedDate: expandedContent.released || "",
-        ratingsID: [], // À remplir séparément via les updates (lors d'un vote)
-        imageGame: expandedContent.background_image || "",
-        ratingSummary: {
-          averageRating: 0, // À calculer lors d'un vote
-          numberOfRatings: 0, // À calculer lors d'un vote
-        },
-      }))
+      latestgames.results.additions && latestgames.results.additions.length > 0, // si présence d'au moins une extension, condition
+    expandedContentList: latestgames.results.additions
+      ? latestgames.results
+        .additions.map((expandedContent) => ({
+          description: expandedContent.description || "",
+          name: expandedContent.name || "",
+          releasedDate: expandedContent.released || "",
+          ratingsID: [], // À remplir séparément via les updates (lors d'un vote)
+          imageGame: expandedContent.background_image || "",
+          ratingSummary: {
+            averageRating: 0, // À calculer lors d'un vote
+            numberOfRatings: 0, // À calculer lors d'un vote
+          },
+        }))
       : [],
-    imageGame: latestgames.background_image || "",
+    imageGame: latestgames.results.background_image || "",
     ratingSummary: {
       averageRating: 0, // À calculer lors d'un vote
       numberOfRatings: 0, // À calculer lors d'un vote
     },
   };
 
+  const savedGames = [];
+
   savedGames.push(formattedGame)
 
-  res.json({ result: true, games: savedGames })
+  console.log(savedGames)
+
+  res.json({ result: true, latestgames })
 });
 
 // Cette route servira à rajouter des jeux à notre wishlist
