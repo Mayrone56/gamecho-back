@@ -5,8 +5,9 @@ const Game = require("../models/games");
 const User = require("../models/users");
 
 const API_KEY = process.env.API_KEY;
-const API_KEY_IGDB = process.env.API_KEY_IGDB
-const BEARER_IGDB = process.env.BEARER_IGDB
+const API_KEY_IGDB = process.env.API_KEY_IGDB;
+const BEARER_IGDB = process.env.BEARER_IGDB;
+const moment = require("moment");
 
 // const moby_key = "moby_IflJKWa2Gpp3OGqFDaxD2018NKt"
 //const API_KEY="49462af3274041c3ad86df3caf7affee//"
@@ -218,47 +219,84 @@ router.post("/search", async (req, res) => {
   return res.json({ result: true, games: savedGames });
 });
 
-// router.get("/:cityName", (req, res) => {
-//   City.findOne({
-//     cityName: { $regex: new RegExp(req.params.cityName, "i") },
-//   }).then((data) => {
-//     if (data) {
-//       res.json({ result: true, weather: data });
-//     } else {
-//       res.json({ result: false, error: "City not found" });
-//     }
-//   });
-// });
+router.get("/latestreleased", async (req, res) => {
+  // Obtention de la date d'aujourd'hui au bon format.
+  const currentDate = moment().format("YYYY-MM-DD");
+  // Obtention de la date d'il y a 5 jours.
+  const oldDate = moment().subtract(3, "days").format("YYYY-MM-DD");
 
-// router.delete("/:cityName", (req, res) => {
-//   City.deleteOne({
-//     cityName: { $regex: new RegExp(req.params.cityName, "i") },
-//   }).then((deletedDoc) => {
-//     if (deletedDoc.deletedCount > 0) {
-//       // document successfully deleted
-//       City.find().then((data) => {
-//         res.json({ result: true, weather: data });
-//       });
-//     } else {
-//       res.json({ result: false, error: "City not found" });
-//     }
-//   });
-// });
+  // Requête à l'API pour rechercher les derniers jeux sortis les 5 derniers jours
+  const datedGames = await fetch(
+    `https://api.rawg.io/api/games?key=${API_KEY}&dates=${oldDate},${currentDate}&page_size=10`
+  );
 
-router.get("/", async (req, res) => {
-  fetch(`https://api.rawg.io/api/games?key=${API_KEY}`)
-    .then((response) => response.json())
-    .then((data) => {
-      if (data) {
-        const formatedGame = {
-          name: data.name,
-          image: data.background_image,
-        };
-        res.json({ result: true, games: data.results });
-      } else {
-        res.json({ games: [] });
-      }
-    });
+  const latestgames = await datedGames.json();
+
+  // Le nouvel objet renvoi un tableau vide à l'appel de la route.
+
+  const formattedGame = {
+    // LA VRAIE DIFFICULTE
+    name: latestgames.results.name || "",
+    description: latestgames.results.description || "",
+    developer:
+      latestgames.developers && latestgames.developers.length > 0
+        ? latestgames.developers[0].name // possibilité d'avoir plusieurs développeurs/éditeurs / Si présence d'au moins un, on récupère seulement le premier
+        : "",
+    publisher:
+      latestgames.results.publishers &&
+      latestgames.results.publishers.length > 0
+        ? latestgames.results.publishers[0].name
+        : "",
+    releasedDate: latestgames.results.released || "",
+    platforms: latestgames.results.platforms
+      ? latestgames.results.platforms
+          .map((platform) => platform.platform.name)
+          .join(", ") // après avoir fait le tour du tableau, on obtient une string jointe avec tous les éléments
+      : "",
+    genre: latestgames.results.genres
+      ? latestgames.results.genres.map((genre) => genre.name).join(", ") // même principe
+      : "",
+    // très perfectible, l'API contient plusieurs tags mais n'est pas correcte pour beaucoup de jeux
+    isMultiplayer:
+      latestgames.results.tags &&
+      latestgames.results.tags.some(
+        (tag) => tag.name.toLowerCase().includes("multiplayer") // on cherche simplement un champ multiplayer sans être sensible à la casse
+      ),
+    // pareil que pour isMultiplayer
+    isOnline:
+      latestgames.results.tags &&
+      latestgames.results.tags.some((tag) =>
+        tag.name.toLowerCase().includes("online")
+      ),
+    isExpandedContent:
+      latestgames.results.additions && latestgames.results.additions.length > 0, // si présence d'au moins une extension, condition
+    expandedContentList: latestgames.results.additions
+      ? latestgames.results.additions.map((expandedContent) => ({
+          description: expandedContent.description || "",
+          name: expandedContent.name || "",
+          releasedDate: expandedContent.released || "",
+          ratingsID: [], // À remplir séparément via les updates (lors d'un vote)
+          imageGame: expandedContent.background_image || "",
+          ratingSummary: {
+            averageRating: 0, // À calculer lors d'un vote
+            numberOfRatings: 0, // À calculer lors d'un vote
+          },
+        }))
+      : [],
+    imageGame: latestgames.results.background_image || "",
+    ratingSummary: {
+      averageRating: 0, // À calculer lors d'un vote
+      numberOfRatings: 0, // À calculer lors d'un vote
+    },
+  };
+
+  const savedGames = [];
+
+  savedGames.push(formattedGame);
+
+  console.log(savedGames);
+
+  res.json({ result: true, latestgames });
 });
 
 // Cette route servira à rajouter des jeux à notre wishlist
@@ -414,251 +452,88 @@ router.get("/suggestions", async (req, res) => {
   return res.json({ result: true, games: formattedSuggestions });
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Route pour rechercher les jeux
 router.get("/searchSECOND", async (req, res) => {
   try {
     // 1. Recherche des jeux
-    const searchResponse = await fetch(
-      "https://api.igdb.com/v4/search",
-      {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Client-ID': `${API_KEY_IGDB}`,
-          'Authorization': `Bearer ${BEARER_IGDB}`,
-        },
-        body: "fields alternative_name,character,checksum,collection,company,description,game,name,platform,published_at,test_dummy,theme;"
-      }
-    );
+    const searchResponse = await fetch("https://api.igdb.com/v4/search", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Client-ID": `${API_KEY_IGDB}`,
+        Authorization: `Bearer ${BEARER_IGDB}`,
+      },
+      body: "fields alternative_name,character,checksum,collection,company,description,game,name,platform,published_at,test_dummy,theme;",
+    });
     const searchResult = await searchResponse.json();
     console.log("Résultat de la recherche :", searchResult);
 
     // 2. Récupération des détails des jeux
-    const gameIDs = searchResult.map(game => game.id);
-    const gamesDetails = await Promise.all(gameIDs.map(async (gameID) => {
-      const gameDetailsResponse = await fetch(
-        "https://api.igdb.com/v4/game",
-        {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Client-ID': `${API_KEY_IGDB}`,
-            'Authorization': `Bearer ${BEARER_IGDB}`,
-          },
-          body: `fields *; where id = ${gameID};`
-        }
-      );
-      const game = await gameDetailsResponse.json(); // Utilisez "game" au lieu de "gameDetails"
-      console.log("Détails du jeu :", game); // Utilisez "game" au lieu de "gameDetails"
-      return game;
-    }));
+    const gameIDs = searchResult.map((game) => game.id);
+    const gamesDetails = await Promise.all(
+      gameIDs.map(async (gameID) => {
+        const gameDetailsResponse = await fetch(
+          "https://api.igdb.com/v4/game",
+          {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Client-ID": `${API_KEY_IGDB}`,
+              Authorization: `Bearer ${BEARER_IGDB}`,
+            },
+            body: `fields *; where id = ${gameID};`,
+          }
+        );
+        const game = await gameDetailsResponse.json(); // Utilisez "game" au lieu de "gameDetails"
+        console.log("Détails du jeu :", game); // Utilisez "game" au lieu de "gameDetails"
+        return game;
+      })
+    );
 
     // 3. Formatage des détails des jeux
-    const formattedGames = gamesDetails.map(game => ({
+    const formattedGames = gamesDetails.map((game) => ({
       name: game.name || "",
       description: game.description || "",
-      developer: game.developers && game.developers.length > 0 ? game.developers[0].name : "",
-      publisher: game.publishers && game.publishers.length > 0 ? game.publishers[0].name : "",
+      developer:
+        game.developers && game.developers.length > 0
+          ? game.developers[0].name
+          : "",
+      publisher:
+        game.publishers && game.publishers.length > 0
+          ? game.publishers[0].name
+          : "",
       releasedDate: game.first_release_date || "",
-      platforms: game.platforms ? game.platforms.map(platform => platform.name).join(", ") : "",
-      genre: game.genres ? game.genres.map(genre => genre.name).join(", ") : "",
-      isMultiplayer: game.features && game.features.some(feature => feature.name.toLowerCase().includes("multiplayer")),
-      isOnline: game.features && game.features.some(feature => feature.name.toLowerCase().includes("online")),
-      isExpandedContent: game.expandedContentList && game.expandedContentList.length > 0,
-      expandedContentList: game.expandedContentList ? game.expandedContentList.map(expandedContent => ({
-        description: expandedContent.description || "",
-        name: expandedContent.name || "",
-        releasedDate: expandedContent.releasedDate || "",
-        ratingsID: [], // À remplir séparément via les mises à jour (lors d'un vote)
-        imageGame: expandedContent.cover || "",
-        ratingSummary: {
-          averageRating: 0, // À calculer lors d'un vote
-          numberOfRatings: 0, // À calculer lors d'un vote
-        },
-      })) : [],
+      platforms: game.platforms
+        ? game.platforms.map((platform) => platform.name).join(", ")
+        : "",
+      genre: game.genres
+        ? game.genres.map((genre) => genre.name).join(", ")
+        : "",
+      isMultiplayer:
+        game.features &&
+        game.features.some((feature) =>
+          feature.name.toLowerCase().includes("multiplayer")
+        ),
+      isOnline:
+        game.features &&
+        game.features.some((feature) =>
+          feature.name.toLowerCase().includes("online")
+        ),
+      isExpandedContent:
+        game.expandedContentList && game.expandedContentList.length > 0,
+      expandedContentList: game.expandedContentList
+        ? game.expandedContentList.map((expandedContent) => ({
+            description: expandedContent.description || "",
+            name: expandedContent.name || "",
+            releasedDate: expandedContent.releasedDate || "",
+            ratingsID: [], // À remplir séparément via les mises à jour (lors d'un vote)
+            imageGame: expandedContent.cover || "",
+            ratingSummary: {
+              averageRating: 0, // À calculer lors d'un vote
+              numberOfRatings: 0, // À calculer lors d'un vote
+            },
+          }))
+        : [],
       imageGame: game.cover || "",
       ratingSummary: {
         averageRating: 0, // À calculer lors d'un vote
@@ -678,7 +553,9 @@ router.get("/searchSECOND", async (req, res) => {
     return res.json({ result: true, games: savedGames });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ result: false, error: "Erreur lors de la recherche de jeux" });
+    return res
+      .status(500)
+      .json({ result: false, error: "Erreur lors de la recherche de jeux" });
   }
 });
 
