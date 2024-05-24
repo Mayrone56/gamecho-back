@@ -212,59 +212,18 @@ router.post("/search", async (req, res) => {
   return res.json({ result: true, games: savedGames });
 });
 
-router.get("/latestreleased/:date", async (req, res) => {
+router.get("/latestreleased", async (req, res) => {
+  // Obtention de la date d'aujourd'hui au bon format.
+  const currentDate = moment().format("YYYY-MM-DD")
+  // Obtention de la date d'il y a 5 jours.
+  const oldDate = moment().subtract(3, 'days').format("YYYY-MM-DD");
 
+  // Requête à l'API pour rechercher les derniers jeux sortis les 5 derniers jours
+  const datedGames = await fetch(`https://api.rawg.io/api/games?key=${API_KEY}&dates=${oldDate},${currentDate}&page_size=10`);
 
-
-  const newDate = moment().format("YYYY-MM-DD")
-
-  console.log(formatedDate)
-
-  // new Date servira de point de départ pour notre affichage des dernières sorties: newDate = date d'aujourd'hui +
-
-
-  // Requête à l'API pour rechercher les derniers jeux sortis en filtrant la date
-  const datedGames = await fetch(`https://api.rawg.io/api/games?key=${API_KEY}&dates=${newDate}`);
-  // Conversion en .json (contraction .then présentée par Valentin)
   const latestgames = await datedGames.json();
 
-  const datedCardgame = []
-
-
-  // La date du jeu doit être antérieure à la date définie dans la méthode moment.
-  // const filteredgameDates = latestgames.results.released < moment([2024, 4, 1]).fromNow();
-  // Si le nombre de jeux trouvé est inférieur à 10, alors nous affichons l'objet gameCard créé ici-même.
-  // Autre option, loop du fetch ou slice 
-  // if (!filteredgameDates) {
-  //   return
-  // } else {
-
-
-  const gameCard = new Game({
-    name: latestgames.results.name,
-    releasedDate: latestgames.results.released,
-    imageGame: latestgames.results.background_image,
-  });
-  const finalreleased = gameCard.save()
-
-  datedCardgame.push(finalreleased)
-  // };
-
-  return res.json({ result: true, gameCard })
-
-
-  // console.log(latestgames.results.released)
-  // console.log(latestgames.length)
-  // const date = moment().format("YYYY-MM-DD");
-
-  // const today = new Date();
-  // console.log(today);
-
-  // format() {
-  //   var options = {year: 'numeric', month: 'numeric', day: 'numeric'}
-  //   return new Date().toLocaleDateString([], options);
-  // };
-
+  res.json({ result: true, latestgames })
 });
 
 // Cette route servira à rajouter des jeux à notre wishlist
