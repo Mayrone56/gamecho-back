@@ -4,7 +4,7 @@ const fetch = require("node-fetch");
 const Game = require("../models/games");
 const User = require("../models/users");
 const moment = require('moment')
-const API_KEY = process.env.API_KEY;
+const API_KEY = "ba83b7607f484a688e2ff6104e8f5e5f";
 
 // const moby_key = "moby_IflJKWa2Gpp3OGqFDaxD2018NKt"
 
@@ -212,25 +212,43 @@ router.post("/search", async (req, res) => {
   return res.json({ result: true, games: savedGames });
 });
 
-router.get("/latestreleased", async (req, res) => {
+router.get("/latestreleased/:date", async (req, res) => {
+
+
+
+  const newDate = moment().format("YYYY-MM-DD")
+
+  console.log(formatedDate)
+
+  // new Date servira de point de départ pour notre affichage des dernières sorties: newDate = date d'aujourd'hui +
+
 
   // Requête à l'API pour rechercher les derniers jeux sortis en filtrant la date
-  const datedGames = await fetch(`https://api.rawg.io/api/games?key=${API_KEY}?dates`);
+  const datedGames = await fetch(`https://api.rawg.io/api/games?key=${API_KEY}&dates=${newDate}`);
   // Conversion en .json (contraction .then présentée par Valentin)
   const latestgames = await datedGames.json();
+
+  const datedCardgame = []
+
+
   // La date du jeu doit être antérieure à la date définie dans la méthode moment.
-  const filteredgameDates = latestgames.results.released < moment([2024, 4, 1]).fromNow();
+  // const filteredgameDates = latestgames.results.released < moment([2024, 4, 1]).fromNow();
   // Si le nombre de jeux trouvé est inférieur à 10, alors nous affichons l'objet gameCard créé ici-même.
-  if (filteredgameDates.length > 10) {
-    return
-  } else {
-    const gameCard = new Game({
-      name: latestgames.results.name,
-      releasedDate: latestgames.results.released,
-      imageGame: latestgames.results.background_image,
-    });
-    const datedGame = gameCard.save()
-  };
+  // Autre option, loop du fetch ou slice 
+  // if (!filteredgameDates) {
+  //   return
+  // } else {
+
+
+  const gameCard = new Game({
+    name: latestgames.results.name,
+    releasedDate: latestgames.results.released,
+    imageGame: latestgames.results.background_image,
+  });
+  const finalreleased = gameCard.save()
+
+  datedCardgame.push(finalreleased)
+  // };
 
   return res.json({ result: true, gameCard })
 
