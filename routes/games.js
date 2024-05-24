@@ -214,23 +214,6 @@ router.post("/search", async (req, res) => {
   return res.json({ result: true, games: savedGames });
 });
 
-//ROUTE KARL A REMETTRE SI BESOIN
-// router.get("/latestreleased", async (req, res) => {
-//   // Obtention de la date d'aujourd'hui au bon format.
-//   const currentDate = moment().format("YYYY-MM-DD")
-//   // Obtention de la date d'il y a 5 jours.
-//   const oldDate = moment().subtract(3, 'days').format("YYYY-MM-DD");
-
-//   // Requête à l'API pour rechercher les derniers jeux sortis les 5 derniers jours
-// const datedGames = await fetch(`https://api.rawg.io/api/games?key=${API_KEY}&dates=${oldDate},${currentDate}&page_size=10`);
-
-//   const latestgames = await datedGames.json();
-
-//   res.json({ result: true, latestgames })
-// });
-//ROUTE KARL A REMETTRE SI BESOIN
-
-//TEST ROUTE LATEST RELEASES SANDRINE
 router.get("/latestreleased", async (req, res) => {
   // Obtention de la date d'aujourd'hui au bon format.
   const currentDate = moment().format("YYYY-MM-DD");
