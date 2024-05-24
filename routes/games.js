@@ -5,6 +5,8 @@ const Game = require("../models/games");
 const User = require("../models/users");
 
 const API_KEY = process.env.API_KEY;
+const API_KEY_IGDB = process.env.API_KEY_IGDB
+const BEARER_IGDB = process.env.BEARER_IGDB
 
 // const moby_key = "moby_IflJKWa2Gpp3OGqFDaxD2018NKt"
 //const API_KEY="49462af3274041c3ad86df3caf7affee//"
@@ -371,7 +373,9 @@ router.get("/suggestions", async (req, res) => {
   ];
 
   // Remove duplicates and limit to 10 unique games
-  const uniqueGames = Array.from(new Set(allSimilarGames.map((game) => game.id)))
+  const uniqueGames = Array.from(
+    new Set(allSimilarGames.map((game) => game.id))
+  )
     .map((id) => {
       return allSimilarGames.find((game) => game.id === id);
     })
@@ -381,13 +385,25 @@ router.get("/suggestions", async (req, res) => {
   const formattedSuggestions = uniqueGames.map((game) => ({
     name: game.name,
     description: game.description_raw || game.description,
-    developer: game.developers && game.developers.length > 0 ? game.developers[0].name : "",
-    publisher: game.publishers && game.publishers.length > 0 ? game.publishers[0].name : "",
+    developer:
+      game.developers && game.developers.length > 0
+        ? game.developers[0].name
+        : "",
+    publisher:
+      game.publishers && game.publishers.length > 0
+        ? game.publishers[0].name
+        : "",
     releasedDate: game.released,
-    platforms: game.platforms ? game.platforms.map((p) => p.platform.name).join(", ") : "",
+    platforms: game.platforms
+      ? game.platforms.map((p) => p.platform.name).join(", ")
+      : "",
     genre: game.genres ? game.genres.map((g) => g.name).join(", ") : "",
-    isMultiplayer: game.tags && game.tags.some((tag) => tag.name.toLowerCase().includes("multiplayer")),
-    isOnline: game.tags && game.tags.some((tag) => tag.name.toLowerCase().includes("online")),
+    isMultiplayer:
+      game.tags &&
+      game.tags.some((tag) => tag.name.toLowerCase().includes("multiplayer")),
+    isOnline:
+      game.tags &&
+      game.tags.some((tag) => tag.name.toLowerCase().includes("online")),
     imageGame: game.background_image,
     ratingSummary: {
       averageRating: game.rating,
@@ -396,6 +412,274 @@ router.get("/suggestions", async (req, res) => {
   }));
 
   return res.json({ result: true, games: formattedSuggestions });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Route pour rechercher les jeux
+router.get("/searchSECOND", async (req, res) => {
+  try {
+    // 1. Recherche des jeux
+    const searchResponse = await fetch(
+      "https://api.igdb.com/v4/search",
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Client-ID': `${API_KEY_IGDB}`,
+          'Authorization': `Bearer ${BEARER_IGDB}`,
+        },
+        body: "fields alternative_name,character,checksum,collection,company,description,game,name,platform,published_at,test_dummy,theme;"
+      }
+    );
+    const searchResult = await searchResponse.json();
+    console.log("Résultat de la recherche :", searchResult);
+
+    // 2. Récupération des détails des jeux
+    const gameIDs = searchResult.map(game => game.id);
+    const gamesDetails = await Promise.all(gameIDs.map(async (gameID) => {
+      const gameDetailsResponse = await fetch(
+        "https://api.igdb.com/v4/game",
+        {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Client-ID': `${API_KEY_IGDB}`,
+            'Authorization': `Bearer ${BEARER_IGDB}`,
+          },
+          body: `fields *; where id = ${gameID};`
+        }
+      );
+      const game = await gameDetailsResponse.json(); // Utilisez "game" au lieu de "gameDetails"
+      console.log("Détails du jeu :", game); // Utilisez "game" au lieu de "gameDetails"
+      return game;
+    }));
+
+    // 3. Formatage des détails des jeux
+    const formattedGames = gamesDetails.map(game => ({
+      name: game.name || "",
+      description: game.description || "",
+      developer: game.developers && game.developers.length > 0 ? game.developers[0].name : "",
+      publisher: game.publishers && game.publishers.length > 0 ? game.publishers[0].name : "",
+      releasedDate: game.first_release_date || "",
+      platforms: game.platforms ? game.platforms.map(platform => platform.name).join(", ") : "",
+      genre: game.genres ? game.genres.map(genre => genre.name).join(", ") : "",
+      isMultiplayer: game.features && game.features.some(feature => feature.name.toLowerCase().includes("multiplayer")),
+      isOnline: game.features && game.features.some(feature => feature.name.toLowerCase().includes("online")),
+      isExpandedContent: game.expandedContentList && game.expandedContentList.length > 0,
+      expandedContentList: game.expandedContentList ? game.expandedContentList.map(expandedContent => ({
+        description: expandedContent.description || "",
+        name: expandedContent.name || "",
+        releasedDate: expandedContent.releasedDate || "",
+        ratingsID: [], // À remplir séparément via les mises à jour (lors d'un vote)
+        imageGame: expandedContent.cover || "",
+        ratingSummary: {
+          averageRating: 0, // À calculer lors d'un vote
+          numberOfRatings: 0, // À calculer lors d'un vote
+        },
+      })) : [],
+      imageGame: game.cover || "",
+      ratingSummary: {
+        averageRating: 0, // À calculer lors d'un vote
+        numberOfRatings: 0, // À calculer lors d'un vote
+      },
+    }));
+
+    // 4. Construction de la base de données
+    // Stockez les détails des jeux dans votre base de données
+    const savedGames = [];
+    formattedGames.forEach(async (game) => {
+      const savedGame = await Game.create(game);
+      savedGames.push(savedGame);
+    });
+
+    // 5. Retourner les jeux sauvegardés
+    return res.json({ result: true, games: savedGames });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ result: false, error: "Erreur lors de la recherche de jeux" });
+  }
 });
 
 module.exports = router;
