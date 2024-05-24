@@ -53,7 +53,7 @@ router.get("/search", async (req, res) => {
 
   const savedGames = []; // tableau vide composé en aval des résultats pertinents
 
-  // Loop through each game ID and fetch its details
+  // loop à l'aide de chaque ID extrait les détails
   for (const gameID of gameIDs) {
     const gameDetailsResponse = await fetch(
       `https://api.rawg.io/api/games/${gameID}?key=${API_KEY}`
@@ -223,80 +223,83 @@ router.get("/latestreleased", async (req, res) => {
   // Obtention de la date d'aujourd'hui au bon format.
   const currentDate = moment().format("YYYY-MM-DD");
   // Obtention de la date d'il y a 5 jours.
-  const oldDate = moment().subtract(3, "days").format("YYYY-MM-DD");
+  const oldDate = moment().subtract(45, "days").format("YYYY-MM-DD");
 
   // Requête à l'API pour rechercher les derniers jeux sortis les 5 derniers jours
   const datedGames = await fetch(
-    `https://api.rawg.io/api/games?key=${API_KEY}&dates=${oldDate},${currentDate}&page_size=10`
+    `https://api.rawg.io/api/games?key=${API_KEY}&dates=${oldDate},${currentDate}&megacritic=85,100&page_size=10`
   );
 
   const latestgames = await datedGames.json();
 
-  // Le nouvel objet renvoi un tableau vide à l'appel de la route.
+  // Extraction de la clé ID pour fetcher la route qui détaille les jeux
+  const gameIDs = latestgames.results.map((game) => game.id); // plus besoin de la méthode slice, le fetch ne retient que dix jeux
+  console.log(gameIDs);
 
-  const formattedGame = {
-    // LA VRAIE DIFFICULTE
-    name: latestgames.results.name || "",
-    description: latestgames.results.description || "",
-    developer:
-      latestgames.developers && latestgames.developers.length > 0
-        ? latestgames.developers[0].name // possibilité d'avoir plusieurs développeurs/éditeurs / Si présence d'au moins un, on récupère seulement le premier
+  const savedGames = []; // tableau vide composé en aval des résultats pertinents
+
+  // loop à l'aide de chaque ID extrait les détails
+  for (const gameID of gameIDs) {
+    const gameDetailsResponse = await fetch(
+      `https://api.rawg.io/api/games/${gameID}?key=${API_KEY}`
+    );
+    const game = await gameDetailsResponse.json();
+
+    const formattedGames = {
+      // LA VRAIE DIFFICULTE
+      name: game.name || "",
+      description: game.description || "",
+      developer:
+        game.developers && game.developers.length > 0
+          ? game.developers[0].name // possibilité d'avoir plusieurs développeurs/éditeurs / Si présence d'au moins un, on récupère seulement le premier
+          : "",
+      publisher:
+        game.publishers && game.publishers.length > 0
+          ? game.publishers[0].name
+          : "",
+      releasedDate: game.released || "",
+      platforms: game.platforms
+        ? game.platforms.map((platform) => platform.platform.name).join(", ") // après avoir fait le tour du tableau, on obtient une string jointe avec tous les éléments
         : "",
-    publisher:
-      latestgames.results.publishers &&
-      latestgames.results.publishers.length > 0
-        ? latestgames.results.publishers[0].name
+      genre: game.genres
+        ? game.genres.map((genre) => genre.name).join(", ") // même principe
         : "",
-    releasedDate: latestgames.results.released || "",
-    platforms: latestgames.results.platforms
-      ? latestgames.results.platforms
-          .map((platform) => platform.platform.name)
-          .join(", ") // après avoir fait le tour du tableau, on obtient une string jointe avec tous les éléments
-      : "",
-    genre: latestgames.results.genres
-      ? latestgames.results.genres.map((genre) => genre.name).join(", ") // même principe
-      : "",
-    // très perfectible, l'API contient plusieurs tags mais n'est pas correcte pour beaucoup de jeux
-    isMultiplayer:
-      latestgames.results.tags &&
-      latestgames.results.tags.some(
-        (tag) => tag.name.toLowerCase().includes("multiplayer") // on cherche simplement un champ multiplayer sans être sensible à la casse
-      ),
-    // pareil que pour isMultiplayer
-    isOnline:
-      latestgames.results.tags &&
-      latestgames.results.tags.some((tag) =>
-        tag.name.toLowerCase().includes("online")
-      ),
-    isExpandedContent:
-      latestgames.results.additions && latestgames.results.additions.length > 0, // si présence d'au moins une extension, condition
-    expandedContentList: latestgames.results.additions
-      ? latestgames.results.additions.map((expandedContent) => ({
-          description: expandedContent.description || "",
-          name: expandedContent.name || "",
-          releasedDate: expandedContent.released || "",
-          ratingsID: [], // À remplir séparément via les updates (lors d'un vote)
-          imageGame: expandedContent.background_image || "",
-          ratingSummary: {
-            averageRating: 0, // À calculer lors d'un vote
-            numberOfRatings: 0, // À calculer lors d'un vote
-          },
-        }))
-      : [],
-    imageGame: latestgames.results.background_image || "",
-    ratingSummary: {
-      averageRating: 0, // À calculer lors d'un vote
-      numberOfRatings: 0, // À calculer lors d'un vote
-    },
-  };
+      // très perfectible, l'API contient plusieurs tags mais n'est pas correcte pour beaucoup de jeux
+      isMultiplayer:
+        game.tags &&
+        game.tags.some((tag) => tag.name.toLowerCase().includes("multiplayer")), // on cherche simplement un champ multiplayer sans être sensible à la casse
+      // pareil que pour isMultiplayer
+      isOnline:
+        game.tags &&
+        game.tags.some((tag) => tag.name.toLowerCase().includes("online")),
+      isExpandedContent: game.additions ? true : false,// on explicite le booléen avant qu'il soit sauvegardé 
+      expandedContentList: game.additions
+        ? game.additions.map((expandedContent) => ({
+            description: expandedContent.description || "",
+            name: expandedContent.name || "",
+            releasedDate: expandedContent.released || "",
+            ratingsID: [], // À remplir séparément via les updates (lors d'un vote)
+            imageGame: expandedContent.background_image || "",
+            ratingSummary: {
+              averageRating: 0, // À calculer lors d'un vote
+              numberOfRatings: 0, // À calculer lors d'un vote
+            },
+          }))
+        : [],
+      imageGame: game.background_image || "",
+      ratingSummary: {
+        averageRating: 0, // À calculer lors d'un vote
+        numberOfRatings: 0, // À calculer lors d'un vote
+      },
+    };
 
-  const savedGames = [];
-
-  savedGames.push(formattedGame);
+    // on joint au tableau le jeu formaté (au sein de la boucle)
+    savedGames.push(formattedGames);
+  }
 
   console.log(savedGames);
 
-  res.json({ result: true, latestgames });
+  res.json({ result: true, latestgames: savedGames });
 });
 
 // Cette route servira à rajouter des jeux à notre wishlist
