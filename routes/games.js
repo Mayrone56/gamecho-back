@@ -215,12 +215,12 @@ router.post("/search", async (req, res) => {
 });
 
 router.get("/latestreleased", async (req, res) => {
-  // Obtention de la date d'aujourd'hui au bon format.
+  // Obtention de la date d'aujourd'hui au format correspondant à celui de l'API.
   const currentDate = moment().format("YYYY-MM-DD");
-  // Obtention de la date d'il y a 5 jours.
+  // Obtention de la date d'il y a 45 jours.
   const oldDate = moment().subtract(45, "days").format("YYYY-MM-DD");
 
-  // Requête à l'API pour rechercher les derniers jeux sortis les 5 derniers jours
+  // Requête à l'API pour rechercher les derniers jeux sortis les 45 derniers jours
   const datedGames = await fetch(
     `https://api.rawg.io/api/games?key=${API_KEY}&dates=${oldDate},${currentDate}&megacritic=85,100&page_size=20`
   );
@@ -270,16 +270,16 @@ router.get("/latestreleased", async (req, res) => {
       isExpandedContent: game.additions ? true : false,// on explicite le booléen avant qu'il soit sauvegardé 
       expandedContentList: game.additions
         ? game.additions.map((expandedContent) => ({
-            description: expandedContent.description || "",
-            name: expandedContent.name || "",
-            releasedDate: expandedContent.released || "",
-            ratingsID: [], // À remplir séparément via les updates (lors d'un vote)
-            imageGame: expandedContent.background_image || "",
-            ratingSummary: {
-              averageRating: 0, // À calculer lors d'un vote
-              numberOfRatings: 0, // À calculer lors d'un vote
-            },
-          }))
+          description: expandedContent.description || "",
+          name: expandedContent.name || "",
+          releasedDate: expandedContent.released || "",
+          ratingsID: [], // À remplir séparément via les updates (lors d'un vote)
+          imageGame: expandedContent.background_image || "",
+          ratingSummary: {
+            averageRating: 0, // À calculer lors d'un vote
+            numberOfRatings: 0, // À calculer lors d'un vote
+          },
+        }))
         : [],
       imageGame: game.background_image || "",
       ratingSummary: {
@@ -521,16 +521,16 @@ router.get("/searchSECOND", async (req, res) => {
         game.expandedContentList && game.expandedContentList.length > 0,
       expandedContentList: game.expandedContentList
         ? game.expandedContentList.map((expandedContent) => ({
-            description: expandedContent.description || "",
-            name: expandedContent.name || "",
-            releasedDate: expandedContent.releasedDate || "",
-            ratingsID: [], // À remplir séparément via les mises à jour (lors d'un vote)
-            imageGame: expandedContent.cover || "",
-            ratingSummary: {
-              averageRating: 0, // À calculer lors d'un vote
-              numberOfRatings: 0, // À calculer lors d'un vote
-            },
-          }))
+          description: expandedContent.description || "",
+          name: expandedContent.name || "",
+          releasedDate: expandedContent.releasedDate || "",
+          ratingsID: [], // À remplir séparément via les mises à jour (lors d'un vote)
+          imageGame: expandedContent.cover || "",
+          ratingSummary: {
+            averageRating: 0, // À calculer lors d'un vote
+            numberOfRatings: 0, // À calculer lors d'un vote
+          },
+        }))
         : [],
       imageGame: game.cover || "",
       ratingSummary: {
