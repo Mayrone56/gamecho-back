@@ -12,24 +12,18 @@ const BEARER_IGDB = process.env.BEARER_IGDB;
 
 // NE PAS OUBLIER de renseigner sa clé RAWG API_KEY dans le fichier .env
 
-
-
-
-//RATING GAME1
-
 router.post('/saveGame', (req, res) => {
   const gameData = req.body; // The game details should be sent in the request body
-  
+
   // Create a new game document
   const newGame = new Game(gameData);
-  console.log("NEWGAME ", newGame)
-  
+  console.log("new game found ", newGame)
+
   // Save the game document to the database
   newGame.save().then(() => {
     res.json({ message: 'Game details saved successfully' });
   })
 });
-
 
 router.get("/search", async (req, res) => {
   // Extrait la requête de recherche à partir des paramètres d'URL
@@ -92,8 +86,8 @@ router.get("/search", async (req, res) => {
       releasedDate: gameDetailsData.released || "",
       platforms: gameDetailsData.platforms
         ? gameDetailsData.platforms
-            .map((platform) => platform.platform.name)
-            .join(", ") // après avoir fait le tour du tableau, on obtient une string jointe avec tous les éléments
+          .map((platform) => platform.platform.name)
+          .join(", ") // après avoir fait le tour du tableau, on obtient une string jointe avec tous les éléments
         : "",
       genre: gameDetailsData.genres
         ? gameDetailsData.genres.map((genre) => genre.name).join(", ") // même principe
@@ -113,16 +107,16 @@ router.get("/search", async (req, res) => {
       isExpandedContent: gameDetailsData.additions ? true : false, // on explicite le booléen pour qu'il soit prêt à être importé selon le modèle dans la BDD dans une route POST
       expandedContentList: gameDetailsData.additions
         ? gameDetailsData.additions.map((expandedContent) => ({
-            description: expandedContent.description || "",
-            name: expandedContent.name || "",
-            releasedDate: expandedContent.released || "",
-            ratingsID: [], // À remplir séparément via les updates (lors d'un vote)
-            imageGame: expandedContent.background_image || "",
-            ratingSummary: {
-              averageRating: 0, // À calculer lors d'un vote
-              numberOfRatings: 0, // À calculer lors d'un vote
-            },
-          }))
+          description: expandedContent.description || "",
+          name: expandedContent.name || "",
+          releasedDate: expandedContent.released || "",
+          ratingsID: [], // À remplir séparément via les updates (lors d'un vote)
+          imageGame: expandedContent.background_image || "",
+          ratingSummary: {
+            averageRating: 0, // À calculer lors d'un vote
+            numberOfRatings: 0, // À calculer lors d'un vote
+          },
+        }))
         : [],
       imageGame: gameDetailsData.background_image || "",
       ratingSummary: {
@@ -195,8 +189,8 @@ router.post("/search", async (req, res) => {
       releasedDate: newGameData.released || "",
       platforms: newGameData.platforms
         ? newGameData.platforms
-            .map((platform) => platform.platform.name)
-            .join(", ")
+          .map((platform) => platform.platform.name)
+          .join(", ")
         : "",
       genre: newGameData.genres
         ? newGameData.genres.map((genre) => genre.name).join(", ")
@@ -208,16 +202,16 @@ router.post("/search", async (req, res) => {
 
       expandedContentList: newGameData.additions
         ? newGameData.additions.map((expandedContent) => ({
-            description: expandedContent.description || "",
-            name: expandedContent.name || "",
-            releasedDate: expandedContent.released || "",
-            ratingsID: [], // Need to be populated separately
-            imageGame: expandedContent.background_image || "",
-            ratingSummary: {
-              averageRating: 0, // Need to be calculated
-              numberOfRatings: 0, // Need to be calculated
-            },
-          }))
+          description: expandedContent.description || "",
+          name: expandedContent.name || "",
+          releasedDate: expandedContent.released || "",
+          ratingsID: [], // Need to be populated separately
+          imageGame: expandedContent.background_image || "",
+          ratingSummary: {
+            averageRating: 0, // Need to be calculated
+            numberOfRatings: 0, // Need to be calculated
+          },
+        }))
         : [],
       imageGame: newGameData.background_image || "",
       ratingSummary: {
@@ -235,12 +229,12 @@ router.post("/search", async (req, res) => {
 });
 
 router.get("/latestreleased", async (req, res) => {
-  // Obtention de la date d'aujourd'hui au bon format.
+  // Obtention de la date d'aujourd'hui au format correspondant à celui de l'API.
   const currentDate = moment().format("YYYY-MM-DD");
   // Obtention de la date d'il y a 45 jours.
   const oldDate = moment().subtract(45, "days").format("YYYY-MM-DD");
 
-  // Requête à l'API pour rechercher les derniers jeux sortis les 5 derniers jours
+  // Requête à l'API pour rechercher les derniers jeux sortis les 45 derniers jours
   const datedGames = await fetch(
     `https://api.rawg.io/api/games?key=${API_KEY}&dates=${oldDate},${currentDate}&megacritic=85,100&page_size=20`
   );
@@ -262,14 +256,14 @@ router.get("/latestreleased", async (req, res) => {
 
     const formattedGames = {
       // LA VRAIE DIFFICULTE
-      name: game.name || "",
+      name: game.name || "", //  comporateur logique "||" qui revient à OR donc game.name OR ""
       description: game.description || "",
       developer:
         game.developers && game.developers.length > 0
-          ? game.developers[0].name // possibilité d'avoir plusieurs développeurs/éditeurs / Si présence d'au moins un, on récupère seulement le premier
+          ? game.developers[0].name // possibilité d'avoir plusieurs développeurs/éditeurs / Si présence d'au moins un, on récupère seulement le premier via l'index [O]
           : "",
       publisher:
-        game.publishers && game.publishers.length > 0
+        game.publishers && game.publishers.length > 0 // même principe que developers
           ? game.publishers[0].name
           : "",
       releasedDate: game.released || "",
@@ -281,7 +275,7 @@ router.get("/latestreleased", async (req, res) => {
         : "",
       // très perfectible, l'API contient plusieurs tags mais n'est pas correcte pour beaucoup de jeux
       isMultiplayer:
-        game.tags &&
+        game.tags && // veut dire en Clean Code = // if (game.tags) {game.tags.some .......}
         game.tags.some((tag) => tag.name.toLowerCase().includes("multiplayer")), // on cherche simplement un champ multiplayer sans être sensible à la casse
       // pareil que pour isMultiplayer
       isOnline:
@@ -290,16 +284,17 @@ router.get("/latestreleased", async (req, res) => {
       isExpandedContent: game.additions ? true : false, // on explicite le booléen pour qu'il soit prêt à être importé selon le modèle dans la BDD dans une route POST
       expandedContentList: game.additions
         ? game.additions.map((expandedContent) => ({
-            description: expandedContent.description || "",
-            name: expandedContent.name || "",
-            releasedDate: expandedContent.released || "",
-            ratingsID: [], // À remplir séparément via les updates (lors d'un vote)
-            imageGame: expandedContent.background_image || "",
-            ratingSummary: {
-              averageRating: 0, // À calculer lors d'un vote
-              numberOfRatings: 0, // À calculer lors d'un vote
-            },
-          }))
+            // map parce que possibilité d'avoir plusieurs DLC / extensions donc plusieurs tableaux
+          description: expandedContent.description || "",
+          name: expandedContent.name || "",
+          releasedDate: expandedContent.released || "",
+          ratingsID: [], // clé étrangère à définir lors d'un vote
+          imageGame: expandedContent.background_image || "",
+          ratingSummary: {
+            averageRating: 0, // À calculer lors d'un vote
+            numberOfRatings: 0, // À calculer lors d'un vote
+          },
+        }))
         : [],
       imageGame: game.background_image || "",
       ratingSummary: {
@@ -437,7 +432,8 @@ router.get("/suggestions", async (req, res) => {
       uniqueGames.push(game);
     }
   }
-  
+
+
   // Fetch detailed information for each unique game
   const detailedGames = [];
   for (const gameId of uniqueGameIds) {
@@ -447,7 +443,7 @@ router.get("/suggestions", async (req, res) => {
     const gameDetails = await gameDetailsResponse.json();
     detailedGames.push(gameDetails);
   }
-  
+
 
   // Format the suggestions
   const formattedSuggestions = detailedGames.map((game) => ({
@@ -540,6 +536,56 @@ router.get("/lol", async (req, res) => {
     const gameData = searchResult[0];
     const mappedGame = mapIGDBToSchema(gameData);
 
+    // 3. Formatage des détails des jeux
+    const formattedGames = gamesDetails.map((game) => ({
+      name: game.name || "",
+      description: game.description || "",
+      developer:
+        game.developers && game.developers.length > 0
+          ? game.developers[0].name
+          : "",
+      publisher:
+        game.publishers && game.publishers.length > 0
+          ? game.publishers[0].name
+          : "",
+      releasedDate: game.first_release_date || "",
+      platforms: game.platforms
+        ? game.platforms.map((platform) => platform.name).join(", ")
+        : "",
+      genre: game.genres
+        ? game.genres.map((genre) => genre.name).join(", ")
+        : "",
+      isMultiplayer:
+        game.features &&
+        game.features.some((feature) =>
+          feature.name.toLowerCase().includes("multiplayer")
+        ),
+      isOnline:
+        game.features &&
+        game.features.some((feature) =>
+          feature.name.toLowerCase().includes("online")
+        ),
+      isExpandedContent:
+        game.expandedContentList && game.expandedContentList.length > 0,
+      expandedContentList: game.expandedContentList
+        ? game.expandedContentList.map((expandedContent) => ({
+          description: expandedContent.description || "",
+          name: expandedContent.name || "",
+          releasedDate: expandedContent.releasedDate || "",
+          ratingsID: [], // À remplir séparément via les mises à jour (lors d'un vote)
+          imageGame: expandedContent.cover || "",
+          ratingSummary: {
+            averageRating: 0, // À calculer lors d'un vote
+            numberOfRatings: 0, // À calculer lors d'un vote
+          },
+        }))
+        : [],
+      imageGame: game.cover || "",
+      ratingSummary: {
+        averageRating: 0, // À calculer lors d'un vote
+        numberOfRatings: 0, // À calculer lors d'un vote
+      },
+    }));
     // Fetch similar games using the similar_games field
     const similarGameIds = gameData.similar_games || [];
     let mappedRecommendations = [];
