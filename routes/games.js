@@ -223,7 +223,7 @@ router.get("/latestreleased", async (req, res) => {
 
   // Requête à l'API pour rechercher les derniers jeux sortis les 5 derniers jours
   const datedGames = await fetch(
-    `https://api.rawg.io/api/games?key=${API_KEY}&dates=${oldDate},${currentDate}&megacritic=85,100&page_size=10`
+    `https://api.rawg.io/api/games?key=${API_KEY}&dates=${oldDate},${currentDate}&megacritic=85,100&page_size=20`
   );
 
   const latestgames = await datedGames.json();
