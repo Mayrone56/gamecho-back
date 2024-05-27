@@ -12,6 +12,19 @@ const BEARER_IGDB = process.env.BEARER_IGDB;
 
 // NE PAS OUBLIER de renseigner sa clé RAWG API_KEY dans le fichier .env
 
+router.post('/saveGame', (req, res) => {
+  const gameData = req.body; // The game details should be sent in the request body
+
+  // Create a new game document
+  const newGame = new Game(gameData);
+  console.log("new game found ", newGame)
+
+  // Save the game document to the database
+  newGame.save().then(() => {
+    res.json({ message: 'Game details saved successfully' });
+  })
+});
+
 router.get("/search", async (req, res) => {
   // Extrait la requête de recherche à partir des paramètres d'URL
   const { name } = req.query;
@@ -243,14 +256,14 @@ router.get("/latestreleased", async (req, res) => {
 
     const formattedGames = {
       // LA VRAIE DIFFICULTE
-      name: game.name || "",
+      name: game.name || "", //  comporateur logique "||" qui revient à OR donc game.name OR ""
       description: game.description || "",
       developer:
         game.developers && game.developers.length > 0
-          ? game.developers[0].name // possibilité d'avoir plusieurs développeurs/éditeurs / Si présence d'au moins un, on récupère seulement le premier
+          ? game.developers[0].name // possibilité d'avoir plusieurs développeurs/éditeurs / Si présence d'au moins un, on récupère seulement le premier via l'index [O]
           : "",
       publisher:
-        game.publishers && game.publishers.length > 0
+        game.publishers && game.publishers.length > 0 // même principe que developers
           ? game.publishers[0].name
           : "",
       releasedDate: game.released || "",
@@ -262,7 +275,7 @@ router.get("/latestreleased", async (req, res) => {
         : "",
       // très perfectible, l'API contient plusieurs tags mais n'est pas correcte pour beaucoup de jeux
       isMultiplayer:
-        game.tags &&
+        game.tags && // veut dire en Clean Code = // if (game.tags) {game.tags.some .......}
         game.tags.some((tag) => tag.name.toLowerCase().includes("multiplayer")), // on cherche simplement un champ multiplayer sans être sensible à la casse
       // pareil que pour isMultiplayer
       isOnline:
@@ -271,10 +284,11 @@ router.get("/latestreleased", async (req, res) => {
       isExpandedContent: game.additions ? true : false, // on explicite le booléen pour qu'il soit prêt à être importé selon le modèle dans la BDD dans une route POST
       expandedContentList: game.additions
         ? game.additions.map((expandedContent) => ({
+            // map parce que possibilité d'avoir plusieurs DLC / extensions donc plusieurs tableaux
             description: expandedContent.description || "",
             name: expandedContent.name || "",
             releasedDate: expandedContent.released || "",
-            ratingsID: [], // À remplir séparément via les updates (lors d'un vote)
+            ratingsID: [], // clé étrangère à définir lors d'un vote
             imageGame: expandedContent.background_image || "",
             ratingSummary: {
               averageRating: 0, // À calculer lors d'un vote
@@ -418,7 +432,7 @@ router.get("/suggestions", async (req, res) => {
       uniqueGames.push(game);
     }
   }
-  
+
   // Fetch detailed information for each unique game
   const detailedGames = [];
   for (const gameId of uniqueGameIds) {
@@ -428,7 +442,6 @@ router.get("/suggestions", async (req, res) => {
     const gameDetails = await gameDetailsResponse.json();
     detailedGames.push(gameDetails);
   }
-  
 
   // Format the suggestions
   const formattedSuggestions = detailedGames.map((game) => ({
