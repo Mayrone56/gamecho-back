@@ -72,6 +72,81 @@ router.post("/signin", (req, res) => {
   });
 });
 
+router.delete("/delete", (req, res) => {
+  User.deleteOne({ username: User.username }).then(() => {
+    res.json({ result: true });
+  });
+});
+
+//USERNAME UPDATE
+router.put("/update-username", (req, res) => {
+  const { currentUsername, newUsername } = req.body;
+
+  if (!checkBody(req.body, ["currentUsername", "newUsername"])) {
+    res.json({ result: false, error: "Missing or empty fields" });
+    return;
+  };
+
+  //on vérifie que le nouveau nom d'utilisateur n'existe pas déjà dans notre base de données
+  User.findOne({ username: newUsername })
+    .then(data => {
+      if (data) {
+        //si oui, on ne change pas le nom d'utilisateur
+        res.json({ result: false, error: 'New username is already taken' })
+      } else (
+        //si ce n'est pas le cas, on change le nom d'utilisateur
+        //Pour modifier un seul document. La methode retourne un objet qui contient:
+        // matchedCount contenant le nombre de documents correspondants
+        // modifiedCount contenant le nombre de documents modifiés
+        // upsertedId contenant l'_id du document upserted (pour nous, toujour null)
+        // upsertedCount contenant le nombre de documents upserted (pour nous, toujour 0)
+        User.updateOne(
+          { username: currentUsername }, //Le critère de recherche 
+          { username: newUsername } //l’élément à modifier 
+        ).then((data) => {
+          console.log(data)
+          //on vérifie si un document avec un nom d'utilisateur correspondant a été trouvé et si le nom d'utilisateur a été mis à jour
+          if (data.modifiedCount > 0 && data.matchedCount > 0) {
+            res.json({ result: true, message: 'Username updated successfully' })
+          } else {
+            res.json({ result: false, error: 'User not found or username not changed' })
+          }
+        })
+      )
+    });
+});
+
+//EMAIL UPDATE
+router.put("/update-email", (req, res) => {
+  const { currentEmail, newEmail } = req.body;
+
+  if (!checkBody(req.body, ["currentEmail", "newEmail"])) {
+    res.json({ result: false, error: "Missing or empty fields" });
+    return;
+  };
+
+  User.findOne({ email: newEmail })
+    .then(data => {
+      if (data) {
+        //si oui, on ne change pas l'email
+        res.json({ result: false, error: 'New email is already used' })
+      } else (
+        //si ce n'est pas le cas, on change l'email
+        User.updateOne(
+          { email: currentEmail }, //Le critère de recherche 
+          { email: newEmail } //l’élément à modifier 
+        ).then((data) => {
+          console.log(data)
+          //on vérifie si un document avec un nom d'utilisateur correspondant a été trouvé et si le nom d'utilisateur a été mis à jour
+          if (data.modifiedCount > 0 && data.matchedCount > 0) {
+            res.json({ result: true, message: 'Email updated successfully' })
+          } else {
+            res.json({ result: false, error: 'User with this email not found or email not changed' })
+          }
+        }))
+    })
+});
+
 router.delete("/:username", (req, res) => {
   User.findOne({ username: { $regex: new RegExp(req.params.username, "i") }, })
     .then(data => {
