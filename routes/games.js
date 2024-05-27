@@ -218,7 +218,7 @@ router.post("/search", async (req, res) => {
 router.get("/latestreleased", async (req, res) => {
   // Obtention de la date d'aujourd'hui au bon format.
   const currentDate = moment().format("YYYY-MM-DD");
-  // Obtention de la date d'il y a 5 jours.
+  // Obtention de la date d'il y a 45 jours.
   const oldDate = moment().subtract(45, "days").format("YYYY-MM-DD");
 
   // Requête à l'API pour rechercher les derniers jeux sortis les 5 derniers jours
@@ -362,16 +362,17 @@ router.get("/suggestions", async (req, res) => {
   const gameDetailsResponse = await fetch(
     `https://api.rawg.io/api/games/${targetGameId}?key=${API_KEY}`
   );
-  const gameDetailsData = await gameDetailsResponse.json();
+  const targetGameData = await gameDetailsResponse.json();
 
-  const { genres, tags, developers, publishers, platforms } = gameDetailsData;
+  // Fetch similar games based on genres, tags, developers, publishers, and platforms of the target game
+  const { genres, tags, developers, publishers, platforms } = targetGameData;
   const genreSlugs = genres.map((genre) => genre.slug);
   const tagSlugs = tags.map((tag) => tag.slug);
   const developerIds = developers.map((developer) => developer.id);
   const publisherIds = publishers.map((publisher) => publisher.id);
   const platformIds = platforms.map((platform) => platform.platform.id);
 
-  // Fetch similar games based on genres, tags, developers, publishers, and platforms of the target game
+  // Fetch similar games from different sources
   const fetchGames = async (url) => {
     const response = await fetch(url);
     const data = await response.json();
@@ -409,17 +410,28 @@ router.get("/suggestions", async (req, res) => {
     ...similarByPlatform,
   ];
 
-  // Remove duplicates and limit to 10 unique games
-  const uniqueGames = Array.from(
-    new Set(allSimilarGames.map((game) => game.id))
-  )
-    .map((id) => {
-      return allSimilarGames.find((game) => game.id === id);
-    })
-    .slice(0, 10);
+  const uniqueGameIds = [];
+  const uniqueGames = [];
+  for (const game of allSimilarGames) {
+    if (!uniqueGameIds.includes(game.id) && uniqueGameIds.length < 10) {
+      uniqueGameIds.push(game.id);
+      uniqueGames.push(game);
+    }
+  }
+  
+  // Fetch detailed information for each unique game
+  const detailedGames = [];
+  for (const gameId of uniqueGameIds) {
+    const gameDetailsResponse = await fetch(
+      `https://api.rawg.io/api/games/${gameId}?key=${API_KEY}`
+    );
+    const gameDetails = await gameDetailsResponse.json();
+    detailedGames.push(gameDetails);
+  }
+  
 
   // Format the suggestions
-  const formattedSuggestions = uniqueGames.map((game) => ({
+  const formattedSuggestions = detailedGames.map((game) => ({
     name: game.name,
     description: game.description_raw || game.description,
     developer:
