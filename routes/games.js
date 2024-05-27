@@ -12,6 +12,25 @@ const BEARER_IGDB = process.env.BEARER_IGDB;
 
 // NE PAS OUBLIER de renseigner sa clé RAWG API_KEY dans le fichier .env
 
+
+
+
+//RATING GAME1
+
+router.post('/saveGame', (req, res) => {
+  const gameData = req.body; // The game details should be sent in the request body
+  
+  // Create a new game document
+  const newGame = new Game(gameData);
+  console.log("NEWGAME ", newGame)
+  
+  // Save the game document to the database
+  newGame.save().then(() => {
+    res.json({ message: 'Game details saved successfully' });
+  })
+});
+
+
 router.get("/search", async (req, res) => {
   // Extrait la requête de recherche à partir des paramètres d'URL
   const { name } = req.query;
