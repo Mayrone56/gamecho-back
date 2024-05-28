@@ -10,7 +10,7 @@ router.post("/save", async (req, res) => {
   // hypothèse d'extraction de tous les champs nécessaires pour le vote
 
   // On ne peut pas à ma connaissance extraire l'ID de l'user ou du game depuis le front, on fera la correspondance grâce aux noms / A terme : possible ?
-  
+
   // au sujet des autres champs, ils sont nécessaires et renseignés en amont dans le front (paramétrer la modal en conséquence)
 
   // L'utilisateur a-t-il un compte enregistré sur la BDD ?
@@ -60,6 +60,8 @@ router.post("/save", async (req, res) => {
   res.json({ success: true, rating: newRating });
 });
 
+
+//SANDRINE
 router.delete("/delete", (req, res) => {
   Rating.deleteOne({ _id: ratingId }).then(() => {
     res.json({ result: true });
@@ -70,19 +72,20 @@ router.delete("/delete", (req, res) => {
 });
 
 
-//DELETE EN COURS SANDRINE
+//DELETE RATING SANDRINE
 
 router.delete('/:ratingId', (req, res) => {
   const ratingId = req.params.ratingId;
-  
-  Rating.findById(ratingId)
-    .then(data => {
-      if (data) {
-        res.json({ result: true, message: 'Rating deleted ', data });
-      } else {
-        res.json({ result: false, message: 'Rating not found' });
-      }
-    })
+  Rating.deleteOne({ _id: ratingId }).then(() => {
+    Rating.findById(ratingId)
+      .then(data => {
+        if (data) {
+          res.json({ result: false, message: 'Rating not deleted ', data });
+        } else {
+          res.json({ result: true, message: 'Delete success' });
+        }
+      })
+  })
 });
 
 module.exports = router;
