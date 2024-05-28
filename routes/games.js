@@ -38,24 +38,21 @@ router.get("/search", async (req, res) => {
   //console.log("Response Headers:", gameSearchResult.headers.raw());
 
   const searchData = await gameSearchResult.json();
-  //console.log(searchData.results.length);
+  console.log(searchData.results.length)
   // Vérifie s'il y a des résultats de recherche
   if (!searchData.results || searchData.results.length === 0) {
     return res.json({ result: false, error: "Aucun jeu trouvé" });
   }
   // Filtrer les résultats pour ne conserver que ceux dont le nom contient la chaîne de recherche
-  const filteredResults = searchData.results.filter(
-    (game) => game.name.toLowerCase().includes(name.toLowerCase()) // sans cette fonction, les jeux donnés en réponse n'étaient pas pertinent
+  const filteredResults = searchData.results.filter((game) =>
+    game.name.toLowerCase().includes(name.toLowerCase()) // sans cette fonction, les jeux donnés en réponse n'étaient pas pertinent
   );
   // Filtrer les résultats pour exclure les jeux amateurs (avec un nombre minimal de critiques ?)
   // const filteredByPopularity = filteredResults.filter((game) => game.reviews_count > 100); // exclut les jeux avec moins de 100 critiques
 
   // Vérifie s'il y a des résultats filtrés
   if (!searchData.results || searchData.results.length === 0) {
-    return res.json({
-      result: false,
-      error: "Aucun jeu trouvé avec le nom spécifié",
-    });
+    return res.json({ result: false, error: "Aucun jeu trouvé avec le nom spécifié" });
   }
   // Extraction de la clé ID pour fetcher la route qui détaille les jeux
   const gameIDs = searchData.results.slice(0, 10).map((game) => game.id); // pour une recherche, on limite à 10 jeux pour l'instant à modifier si bouton +
@@ -71,8 +68,7 @@ router.get("/search", async (req, res) => {
     const gameDetailsData = await gameDetailsResponse.json();
 
     // Formatage des données pour chaque jeu // si la clé n'existe pas, on la remplace par une string vide
-    const formattedGame = {
-      // LA VRAIE DIFFICULTE
+    const formattedGame = { // LA VRAIE DIFFICULTE
       name: gameDetailsData.name || "",
       description: gameDetailsData.description || "",
       developer:
@@ -92,14 +88,12 @@ router.get("/search", async (req, res) => {
       genre: gameDetailsData.genres
         ? gameDetailsData.genres.map((genre) => genre.name).join(", ") // même principe
         : "",
-      // très perfectible, l'API contient plusieurs tags mais n'est pas correcte pour beaucoup de jeux
-      isMultiplayer:
+      isMultiplayer: // très perfectible, l'API contient plusieurs tags mais n'est pas correcte pour beaucoup de jeux
         gameDetailsData.tags &&
-        gameDetailsData.tags.some(
-          (tag) => tag.name.toLowerCase().includes("multiplayer") // on cherche simplement un champ multiplayer sans être sensible à la casse
+        gameDetailsData.tags.some((tag) =>
+          tag.name.toLowerCase().includes("multiplayer") // on cherche simplement un champ multiplayer sans être sensible à la casse
         ),
-      // pareil que pour isMultiplayer
-      isOnline:
+      isOnline: // pareil que pour isMultiplayer
         gameDetailsData.tags &&
         gameDetailsData.tags.some((tag) =>
           tag.name.toLowerCase().includes("online")
@@ -132,6 +126,9 @@ router.get("/search", async (req, res) => {
   // Retourne les jeux formatés en tant que réponse
   return res.json({ result: true, games: savedGames });
 });
+
+
+
 
 router.post("/search", async (req, res) => {
   const { name } = req.body; // destructuring the req.body (search field)
