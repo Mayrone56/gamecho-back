@@ -147,6 +147,22 @@ router.put("/update-email", (req, res) => {
     })
 });
 
+router.delete("/:username", (req, res) => {
+  User.findOne({ username: { $regex: new RegExp(req.params.username, "i") }, })
+    .then(data => {
+      console.log(data)
+      if (data) {
+        User.deleteOne({ username: { $regex: new RegExp(req.params.username, "i") }, })
+          .then(
+            res.json({ result: true, userdeleted: data }))
+      }
+
+      else {
+        res.json({ result: false, error: 'No user found' })
+      }
+    })
+})
+
 /* GET users listing. */
 // router.get('/', function(req, res, next) {
 //   res.send('respond with a resource');
