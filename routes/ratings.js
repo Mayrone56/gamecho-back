@@ -60,4 +60,29 @@ router.post("/save", async (req, res) => {
   res.json({ success: true, rating: newRating });
 });
 
+router.delete("/delete", (req, res) => {
+  Rating.deleteOne({ _id: ratingId }).then(() => {
+    res.json({ result: true });
+    Rating.find().then(data => {
+      console.log(data);
+    });
+  });
+});
+
+
+//DELETE EN COURS SANDRINE
+
+router.delete('/:ratingId', (req, res) => {
+  const ratingId = req.params.ratingId;
+  
+  Rating.findById(ratingId)
+    .then(data => {
+      if (data) {
+        res.json({ result: true, message: 'Rating deleted ', data });
+      } else {
+        res.json({ result: false, message: 'Rating not found' });
+      }
+    })
+});
+
 module.exports = router;
