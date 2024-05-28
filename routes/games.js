@@ -35,10 +35,10 @@ router.get("/search", async (req, res) => {
     `https://api.rawg.io/api/games?key=${API_KEY}&search=${name}&page_size=100`
   );
   // un console.log qui permet de voir les réponses de l'API
-  console.log("Response Headers:", gameSearchResult.headers.raw());
+  //console.log("Response Headers:", gameSearchResult.headers.raw());
 
   const searchData = await gameSearchResult.json();
-  console.log(searchData.results.length);
+  //console.log(searchData.results.length);
   // Vérifie s'il y a des résultats de recherche
   if (!searchData.results || searchData.results.length === 0) {
     return res.json({ result: false, error: "Aucun jeu trouvé" });
@@ -59,7 +59,7 @@ router.get("/search", async (req, res) => {
   }
   // Extraction de la clé ID pour fetcher la route qui détaille les jeux
   const gameIDs = searchData.results.slice(0, 10).map((game) => game.id); // pour une recherche, on limite à 10 jeux pour l'instant à modifier si bouton +
-  console.log(gameIDs);
+  //console.log(gameIDs);
 
   const savedGames = []; // tableau vide composé en aval des résultats pertinents
 
@@ -135,7 +135,7 @@ router.get("/search", async (req, res) => {
 
 router.post("/search", async (req, res) => {
   const { name } = req.body; // destructuring the req.body (search field)
-  console.log(name);
+  //console.log(name);
 
   // vérifie la présence du jeu dans la BDD
   const alreadySavedGame = await Game.findOne({
@@ -150,7 +150,7 @@ router.post("/search", async (req, res) => {
     `https://api.rawg.io/api/games?key=${API_KEY}&search=${name}`
   );
   const searchData = await gameSearchResult.json();
-  console.log(searchData);
+ // console.log(searchData);
 
   // vérifie si un résultat s'affiche
   if (!searchData.results || searchData.results.length === 0) {
@@ -159,7 +159,7 @@ router.post("/search", async (req, res) => {
 
   // Extract the IDs of the first 10 games from the search results
   const gameIds = searchData.results.slice(0, 10).map((game) => game.id);
-  console.log(gameIds);
+  //console.log(gameIds);
 
   const savedGames = [];
 
@@ -243,7 +243,7 @@ router.get("/latestreleased", async (req, res) => {
 
   // Extraction de la clé ID pour fetcher la route qui détaille les jeux
   const gameIDs = latestgames.results.map((game) => game.id); // plus besoin de la méthode slice, le fetch ne retient que dix jeux
-  console.log(gameIDs);
+  //console.log(gameIDs);
 
   const savedGames = []; // tableau vide composé en aval des résultats pertinents
 
@@ -307,7 +307,7 @@ router.get("/latestreleased", async (req, res) => {
     savedGames.push(formattedGames);
   }
 
-  console.log(savedGames);
+  //console.log(savedGames);
 
   res.json({ result: true, latestgames: savedGames });
 });
