@@ -23,7 +23,8 @@ router.post("/signup", (req, res) => {
   }
   // Vérifions maintenant que l'utilisateur n'est pas déjà enregistré
   User.findOne({
-    username: { $regex: new RegExp(req.body.username, "i") },
+    username:{ $regex: new RegExp(`/^${req.body.username}$/`, "i") },
+    email: { $regex: new RegExp(req.body.email, "i") }, // 
   }).then((data) => {
     if (data === null) {
       // Si nous n'avons pas trouvé de "username" ( data === null), alors nous pour créer un nouvel utilisateur.
@@ -39,7 +40,7 @@ router.post("/signup", (req, res) => {
       newUser.save().then((newDoc) => {
         res.json({ result: true, token: newDoc.token });
         return; // ajout d'un return à CHAQUE réponse pour empêcher réponses multiples
-      });
+      }); 
     } else {
       // Si l'utilisateur existe déjà, nous retournons une réponse à false.
       res.json({ result: false, error: "User already registered" });
