@@ -95,29 +95,58 @@ router.post("/save", async (req, res) => {
   res.json({ success: true, rating: newRating || previousRating }); // || = "ou", selon l'existence préalable d'un vote, la réponse renvoie les données d'un nouveau vote OU celles d'une MàJ d'un vote déjà enregistré
 });
 
-//SANDRINE
-router.delete("/delete", (req, res) => {
-  Rating.deleteOne({ _id: ratingId }).then(() => {
-    res.json({ result: true });
-    Rating.find().then((data) => {
-      console.log(data);
-    });
-  });
-});
+
+
+///////////////////
 
 //DELETE RATING SANDRINE
+//CONSEIL RAIDA step by step
+//Etape 1 prendre dans les params token du user et le nom du jeu correspondant au vote
+//Etape 2 Trouver le user a qui appartient le token et recuperer son ID
+//Etape 3 Trouve le rating qui contient le nom du jeu et qui match avec le user ID recup en etape 2
+//Etape 4 on supprime une fois trouvé
+//3 et 4 va se faire avec deleteOne
+//La value de retour avec deleOne ya un champs deletedcount qui est le compteur du document qui a été supprimé
+//C'est la qu'on peut dire que ça a bien été supprimé 
 
-router.delete("/:ratingId", (req, res) => {
-  const ratingId = req.params.ratingId;
-  Rating.deleteOne({ _id: ratingId }).then(() => {
-    Rating.findById(ratingId).then((data) => {
-      if (data) {
-        res.json({ result: false, message: "Rating not deleted ", data });
-      } else {
-        res.json({ result: true, message: "Delete success" });
-      }
-    });
-  });
+//On a delete en bdd sur les hackatweet, weather app, locapic
+
+//ETAPE 1 - Mettre les params token et name nom du jeu dans la route delete afin de se baser sur ces deux params de recherche 
+
+router.delete('/:token/:name', (req, res) => {
+  //ETAPE 2 - Trouver le user à qui appartient le token car il ne faut pas tranferer les id en front, que ce soit pour le user ou n'importe quoi d'autre
+
+  User.findOne({ token: req.params.token }).then(user => { //On cherche dans User qui est le nom du schema le token
+    //Si le user n'existe pas on renvoie une rreur et on arrete le code avec return
+    if (user === null) {
+      res.json({ result: false, error: 'User not found' });
+      return;
+    } else {
+
+      Game.findOne({ name: req.params.name }).then(game => {
+        if (game === null) {
+          res.json({ result: false, error: "Game not found" });
+          return;
+        } else {
+          //console.log("USER + GAME ", user._id, game._id)
+          //Se base sur les id de user et game
+
+          //ETAPE 3
+          Rating.deleteOne({ user: user._id, game: game._id })
+            .then(deleteRating => {
+              console.log("DELETERATING ", deleteRating)
+              if (deleteRating.deletedCount > 0) {
+                res.json({ result: true })
+                return;
+              }
+              else {
+                res.json({ result: false, error: "Rating" });
+              }
+            });
+        }
+      })
+    }
+  })
 });
 
 /*Trouver l'utilisateur grace au token,
