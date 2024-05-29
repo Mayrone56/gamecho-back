@@ -120,4 +120,33 @@ router.delete("/:ratingId", (req, res) => {
   });
 });
 
+/*Trouver l'utilisateur grace au token,
+recuper le _id de l'utilisateur
+dans la collection rating faire un find avec l'utilisateur id comment filtre
+puis faire un res.json de ma data dans le front*/
+router.get("/:token", (req,res)=>{
+  User.findOne({
+    token: { $regex: new RegExp(req.params.token, "i") },
+  }).then(data => {
+    if (data) {
+      res.json({ result: true, user: data });
+    } else {
+      res.json({ result: false, error: "User not found" });
+    }
+  });
+})
+
+router.delete("/:_id", (req,res)=>{
+  Rating.findOne({
+    _id:{$regex: new RegExp(req.params.token, "i")}
+  }).then(data=>{
+    if(data) {
+      Rating.deleteMany()
+    }
+    else{
+      res.json({ result: false,error })
+    }
+  })
+})
+
 module.exports = router;
