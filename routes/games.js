@@ -12,6 +12,20 @@ const BEARER_IGDB = process.env.BEARER_IGDB;
 
 // NE PAS OUBLIER de renseigner sa clé RAWG API_KEY dans le fichier .env
 
+router.get('/ratings', (req, res) => {
+  
+  const {name} = req.query
+
+  Game.findOne({name: name})
+  .populate('ratingsID')
+  .then(data => {
+    if(!data) {
+      res.json({result: false, erreur: "Game not found"});
+    } else
+    res.json({ result: true, data: data.ratingsID});
+    });
+  });
+
 router.post('/saveGame', (req, res) => {
   const gameData = req.body; // The game details should be sent in the request body
 
@@ -24,6 +38,8 @@ router.post('/saveGame', (req, res) => {
     res.json({ message: 'Game details saved successfully' });
   })
 });
+
+// SECTION RECHERCHE DANS LA HOME
 
 router.get("/search", async (req, res) => {
   // Extrait la requête de recherche à partir des paramètres d'URL
@@ -129,7 +145,7 @@ router.get("/search", async (req, res) => {
 
 
 
-
+// SECTION SUGGESTION 
 
 router.get("/suggestions", async (req, res) => {
   const { name } = req.query;
