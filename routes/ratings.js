@@ -5,7 +5,16 @@ const Rating = require("../models/ratings");
 const User = require("../models/users");
 
 router.post("/save", async (req, res) => {
-  const { username, gameName, rating, ratingMode, comment, ratingDate, gameDetails } = req.body;// IMPORTANT req.body du reducer gameDetails contenant toutes les données formatées du jeu
+  const { // destructuration
+    username,
+    gameName,
+    rating,
+    ratingMode,
+    comment,
+    ratingDate,
+    gameDetails,
+    // category, A mettre en place à terme ? Le critère personnel de l'utilisateur
+  } = req.body; // IMPORTANT req.body du reducer gameDetails contenant toutes les données formatées du jeu
 
   // hypothèse d'extraction de tous les champs nécessaires pour le vote
 
@@ -31,61 +40,84 @@ router.post("/save", async (req, res) => {
     // génération automatique d'un ID qu'on a pas besoin de renseigner à la création d'un nouveau document
     // le champ _id sera cependant nécessaire pour lier le vote au jeu nouvellement créé
 
-    console.log("New game created:", game);
+    console.log("New game created !", game);
   }
+  // étape supplémentaire ajoutée le 29 mai 2024
+  //
+  const previousRating = await Rating.findOne({
+    user: user._id,
+    game: game._id,
+  }); // on cherche un rating lié à un utilisateur ET le jeu noté
 
-  // Création du vote avec l'hypothèse que les champs correspondent aux noms des valeurs renseignées côté frontend
-  const newRating = await new Rating({
-    user: user._id, // le lien avec les IDs respectifs se fait ici pour assurer l'uniformisation des données / éviter les doublons
-    game: game._id, // même chose
-    rating,
-    ratingMode,
-    comment,
-    ratingDate,
-  });
-  console.log("New rating created:", newRating);
+  let newRating; // on déclare la variable en let pour lui assigner une valeur dans la condition => permet l'exploitation de la valeur en dehors du scope (de l'échelle ?) de la condition
 
-  await newRating.save(); // ne pas oublier la sauvegarde du rating sinon il sera juste référencé dans game !
+  if (previousRating) {
+    // si l'utilateur a voté, on met à jour toutes les valeurs de ce vote avec les données du req.body
+    previousRating.rating = rating; // le previousRating cible le vote trouvé dans la BDD
+    previousRating.ratingMode = ratingMode;
+    previousRating.comment = comment;
+    previousRating.ratingDate = ratingDate;
+    await previousRating.save();
+    console.log("Rating updated !", previousRating);
+  } else {
+    // sinon, création d'un nouveau rating avec les données récupérées
 
-  // On push le vote de l'utilisateur dans le champ ratingsID qui lie le jeu à tous ses votes
-  game.ratingsID.push(newRating._id); // noter l'appel de la clé
-  // Confirmation avec les infos du jeu
-  console.log("Game ratings updated:", game);
+    // Création du vote avec l'hypothèse que les champs correspondent aux noms des valeurs renseignées côté frontend
+    newRating = await new Rating({
+      user: user._id, // le lien avec les IDs respectifs se fait ici pour assurer l'uniformisation des données / éviter les doublons
+      game: game._id, // même chose
+      rating,
+      ratingMode,
+      comment,
+      ratingDate,
+    });
+    console.log("New rating created !", newRating);
 
-  // Sauvegarde du jeu
-  await game.save();
+    await newRating.save(); // ne pas oublier la sauvegarde du rating sinon il sera juste référencé dans game !
 
+    // On push le vote de l'utilisateur dans le champ ratingsID qui lie le jeu à tous ses votes
+    game.ratingsID.push(newRating._id); // noter l'appel de la clé
+    // Confirmation avec les infos du jeu
+    console.log("Game ratings updated !", game);
+
+    // Sauvegarde du jeu
+    await game.save();
+
+    // étape supplémentaire ajoutée le 29 mai 2024
+    //pour mettre à jour la clé ratings de la collections users ! Désormais les trois collections de la BDD sont liées
+    user.ratings.push(newRating._id); // même procédure que pour la sauvegarde de l'ID du rating dans la collection jeu : on pousse dans un tableau l'élément
+    await user.save();
+    console.log("User ratings updated !", user);
+    return newRating;
+  }
   // Message de confirmation
   console.log("Rating saved successfully");
-  res.json({ success: true, rating: newRating });
+  res.json({ success: true, rating: newRating || previousRating }); // || = "ou", selon l'existence préalable d'un vote, la réponse renvoie les données d'un nouveau vote OU celles d'une MàJ d'un vote déjà enregistré
 });
-
 
 //SANDRINE
 router.delete("/delete", (req, res) => {
   Rating.deleteOne({ _id: ratingId }).then(() => {
     res.json({ result: true });
-    Rating.find().then(data => {
+    Rating.find().then((data) => {
       console.log(data);
     });
   });
 });
 
-
 //DELETE RATING SANDRINE
 
-router.delete('/:ratingId', (req, res) => {
+router.delete("/:ratingId", (req, res) => {
   const ratingId = req.params.ratingId;
   Rating.deleteOne({ _id: ratingId }).then(() => {
-    Rating.findById(ratingId)
-      .then(data => {
-        if (data) {
-          res.json({ result: false, message: 'Rating not deleted ', data });
-        } else {
-          res.json({ result: true, message: 'Delete success' });
-        }
-      })
-  })
+    Rating.findById(ratingId).then((data) => {
+      if (data) {
+        res.json({ result: false, message: "Rating not deleted ", data });
+      } else {
+        res.json({ result: true, message: "Delete success" });
+      }
+    });
+  });
 });
 
 module.exports = router;
