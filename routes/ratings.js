@@ -71,7 +71,6 @@ router.delete("/delete", (req, res) => {
   });
 });
 
-
 //DELETE RATING SANDRINE
 
 router.delete('/:ratingId', (req, res) => {
