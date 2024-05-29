@@ -358,6 +358,8 @@ router.get("/suggestions", async (req, res) => {
   );
   const gameSearchData = await gameSearchResponse.json();
 
+  console.log(gameSearchData)
+
   if (!gameSearchData.results || gameSearchData.results.length === 0) {
     return res.json({
       result: false,
