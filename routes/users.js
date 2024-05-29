@@ -164,6 +164,18 @@ router.delete("/:username", (req, res) => {
     })
 })
 
+router.get("/:token", (req,res)=>{
+  User.findOne({
+    token: { $regex: new RegExp(req.params.token, "i") },
+  }).then(data => {
+    if (data) {
+      res.json({ result: true, user: data });
+    } else {
+      res.json({ result: false, error: "User not found" });
+    }
+  });
+})
+
 /* GET users listing. */
 // router.get('/', function(req, res, next) {
 //   res.send('respond with a resource');
