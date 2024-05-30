@@ -165,15 +165,26 @@ router.get("/:token", (req,res)=>{
   });
 })
 
-router.delete("/:_id", (req,res)=>{
-  Rating.findOne({
-    _id:{$regex: new RegExp(req.params.token, "i")}
+router.delete("/:token", (req,res)=>{
+  User.findOne({
+    token:req.params.token
   }).then(data=>{
     if(data) {
-      Rating.deleteMany()
+      Rating.deleteMany({
+       user:data._id
+      })
+      .then(data=>{
+       if(data.deletedCount>0)
+        {
+          res.json({result:true})
+        }
+        else{
+          res.json({result:false,error:"rating not deleted"})
+        }
+      })
     }
     else{
-      res.json({ result: false,error })
+      res.json({ result: false })
     }
   })
 })
