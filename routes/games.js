@@ -37,7 +37,7 @@ router.get("/latestreleased", async (req, res) => {
       `https://api.rawg.io/api/games/${gameID}?key=${API_KEY}`
     );
     const game = await gameDetailsResponse.json();
-       // Continue est un contrôleur de flux exclusif aux boucles for of, il permet d'ignorer l'élément souhaité dans l'itération. 
+    // Continue est un contrôleur de flux exclusif aux boucles for of, il permet d'ignorer l'élément souhaité dans l'itération. 
     // Ici, les jeux sans images ne feront pas parti de nos variables.
     if (!game.background_image) {
       continue;
@@ -73,7 +73,7 @@ router.get("/latestreleased", async (req, res) => {
       isExpandedContent: game.additions ? true : false, // on explicite le booléen pour qu'il soit prêt à être importé selon le modèle dans la BDD dans une route POST
       expandedContentList: game.additions
         ? game.additions.map((expandedContent) => ({
-            // map parce que possibilité d'avoir plusieurs DLC / extensions donc plusieurs tableaux
+          // map parce que possibilité d'avoir plusieurs DLC / extensions donc plusieurs tableaux
           description: expandedContent.description || "",
           name: expandedContent.name || "",
           releasedDate: expandedContent.released || "",
