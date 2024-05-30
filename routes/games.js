@@ -12,6 +12,91 @@ const BEARER_IGDB = process.env.BEARER_IGDB;
 
 // NE PAS OUBLIER de renseigner sa clé RAWG API_KEY dans le fichier .env
 
+router.get("/latestreleased", async (req, res) => {
+  // Obtention de la date d'aujourd'hui au format correspondant à celui de l'API.
+  const currentDate = moment().format("YYYY-MM-DD");
+  // Obtention de la date d'il y a 45 jours.
+  const oldDate = moment().subtract(45, "days").format("YYYY-MM-DD");
+
+  // Requête à l'API pour rechercher les derniers jeux sortis les 45 derniers jours
+  const datedGames = await fetch(
+    `https://api.rawg.io/api/games?key=${API_KEY}&dates=${oldDate},${currentDate}&megacritic=85,100&page_size=20`
+  );
+
+  const latestgames = await datedGames.json();
+
+  // Extraction de la clé ID pour fetcher la route qui détaille les jeux
+  const gameIDs = latestgames.results.map((game) => game.id); // plus besoin de la méthode slice, le fetch ne retient que dix jeux
+  //console.log(gameIDs);
+
+  const savedGames = []; // tableau vide composé en aval des résultats pertinents
+
+  // loop à l'aide de chaque ID extrait les détails
+  for (const gameID of gameIDs) {
+    const gameDetailsResponse = await fetch(
+      `https://api.rawg.io/api/games/${gameID}?key=${API_KEY}`
+    );
+    const game = await gameDetailsResponse.json();
+
+    const formattedGames = {
+      // LA VRAIE DIFFICULTE
+      name: game.name || "", //  comporateur logique "||" qui revient à OR donc game.name OR ""
+      description: game.description || "",
+      developer:
+        game.developers && game.developers.length > 0
+          ? game.developers[0].name // possibilité d'avoir plusieurs développeurs/éditeurs / Si présence d'au moins un, on récupère seulement le premier via l'index [O]
+          : "",
+      publisher:
+        game.publishers && game.publishers.length > 0 // même principe que developers
+          ? game.publishers[0].name
+          : "",
+      releasedDate: game.released || "",
+      platforms: game.platforms
+        ? game.platforms.map((platform) => platform.platform.name).join(", ") // après avoir fait le tour du tableau, on obtient une string jointe avec tous les éléments
+        : "",
+      genre: game.genres
+        ? game.genres.map((genre) => genre.name).join(", ") // même principe
+        : "",
+      // très perfectible, l'API contient plusieurs tags mais n'est pas correcte pour beaucoup de jeux
+      isMultiplayer:
+        game.tags && // veut dire en Clean Code = // if (game.tags) {game.tags.some .......}
+        game.tags.some((tag) => tag.name.toLowerCase().includes("multiplayer")), // on cherche simplement un champ multiplayer sans être sensible à la casse
+      // pareil que pour isMultiplayer
+      isOnline:
+        game.tags &&
+        game.tags.some((tag) => tag.name.toLowerCase().includes("online")),
+      isExpandedContent: game.additions ? true : false, // on explicite le booléen pour qu'il soit prêt à être importé selon le modèle dans la BDD dans une route POST
+      expandedContentList: game.additions
+        ? game.additions.map((expandedContent) => ({
+            // map parce que possibilité d'avoir plusieurs DLC / extensions donc plusieurs tableaux
+          description: expandedContent.description || "",
+          name: expandedContent.name || "",
+          releasedDate: expandedContent.released || "",
+          ratingsID: [], // clé étrangère à définir lors d'un vote
+          imageGame: expandedContent.background_image || "",
+          ratingSummary: {
+            averageRating: 0, // À calculer lors d'un vote
+            numberOfRatings: 0, // À calculer lors d'un vote
+          },
+        }))
+        : [],
+      imageGame: game.background_image || "",
+      ratingSummary: {
+        averageRating: 0, // À calculer lors d'un vote
+        numberOfRatings: 0, // À calculer lors d'un vote
+      },
+    };
+
+    // on joint au tableau le jeu formaté (au sein de la boucle)
+    savedGames.push(formattedGames);
+  }
+
+  //console.log(savedGames);
+
+  res.json({ result: true, latestgames: savedGames });
+});
+
+
 router.get('/ratings', (req, res) => {
 
   const { name } = req.query
@@ -39,7 +124,7 @@ router.post('/saveGame', (req, res) => {
   })
 });
 
-// SECTION RECHERCHE DANS LA HOME
+// SECTION DERNIERS JEUX
 
 router.get("/search", async (req, res) => {
   // Extrait la requête de recherche à partir des paramètres d'URL
