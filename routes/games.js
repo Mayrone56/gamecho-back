@@ -44,7 +44,7 @@ router.post('/saveGame', (req, res) => {
 router.get("/search", async (req, res) => {
   // Extrait la requête de recherche à partir des paramètres d'URL
   const { name } = req.query;
-  console.log(name);
+  // console.log(name);
 
   // Requête pour rechercher une liste de jeux basée sur le nom
   const gameSearchResult = await fetch(
@@ -72,7 +72,10 @@ router.get("/search", async (req, res) => {
   }
   // Extraction de la clé ID pour fetcher la route qui détaille les jeux
   const gameIDs = searchData.results.slice(0, 10).map((game) => game.id); // pour une recherche, on limite à 10 jeux pour l'instant à modifier si bouton +
-  //console.log(gameIDs);
+  // console.log(gameIDs);
+
+
+
 
   const savedGames = []; // tableau vide composé en aval des résultats pertinents
 
@@ -82,7 +85,11 @@ router.get("/search", async (req, res) => {
       `https://api.rawg.io/api/games/${gameID}?key=${API_KEY}`
     );
     const gameDetailsData = await gameDetailsResponse.json();
-
+    // Continue est un contrôleur de flux exclusif aux boucles for of, il permet d'ignorer l'élément souhaité dans l'itération. 
+    // Ici, les jeux sans images ne feront pas parti de nos variables.
+    if (!gameDetailsData.background_image) {
+      continue;
+    }
     // Formatage des données pour chaque jeu // si la clé n'existe pas, on la remplace par une string vide
     const formattedGame = { // LA VRAIE DIFFICULTE
       name: gameDetailsData.name || "",
@@ -160,6 +167,7 @@ router.get("/suggestions", async (req, res) => {
   );
   const gameSearchData = await gameSearchResponse.json();
 
+
   console.log(gameSearchData)
 
   if (!gameSearchData.results || gameSearchData.results.length === 0) {
@@ -231,8 +239,13 @@ router.get("/suggestions", async (req, res) => {
     if (!uniqueGameIds.includes(game.id) && uniqueGameIds.length < 10) {
       uniqueGameIds.push(game.id);
       uniqueGames.push(game);
+      if (!uniqueGameIds.background_image || !uniqueGames.background_image) {
+        continue;
+      }
     }
   }
+
+
 
 
   // Fetch detailed information for each unique game
