@@ -37,6 +37,11 @@ router.get("/latestreleased", async (req, res) => {
       `https://api.rawg.io/api/games/${gameID}?key=${API_KEY}`
     );
     const game = await gameDetailsResponse.json();
+       // Continue est un contrôleur de flux exclusif aux boucles for of, il permet d'ignorer l'élément souhaité dans l'itération. 
+    // Ici, les jeux sans images ne feront pas parti de nos variables.
+    if (!game.background_image) {
+      continue;
+    }
 
     const formattedGames = {
       // LA VRAIE DIFFICULTE
