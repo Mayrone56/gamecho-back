@@ -5,8 +5,8 @@ const moment = require("moment");
 const Game = require("../models/games");
 
 const API_KEY = process.env.API_KEY;
-const API_KEY_IGDB = process.env.API_KEY_IGDB;
-const BEARER_IGDB = process.env.BEARER_IGDB;
+// const API_KEY_IGDB = process.env.API_KEY_IGDB;
+// const BEARER_IGDB = process.env.BEARER_IGDB;
 
 // const moby_key = "moby_IflJKWa2Gpp3OGqFDaxD2018NKt"
 
