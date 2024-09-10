@@ -117,7 +117,7 @@ router.delete('/:token/:name', (req, res) => {
   //ETAPE 2 - Trouver le user à qui appartient le token car il ne faut pas tranferer les id en front, que ce soit pour le user ou n'importe quoi d'autre
 
   User.findOne({ token: req.params.token }).then(user => { //On cherche dans User qui est le nom du schema le token
-    //Si le user n'existe pas on renvoie une rreur et on arrete le code avec return
+    //Si le user n'existe pas on renvoie une erreur et on arrete le code avec return
     if (user === null) {
       res.json({ result: false, error: 'User not found' });
       return;

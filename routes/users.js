@@ -23,7 +23,7 @@ router.post("/signup", (req, res) => {
   }
   // Vérifions maintenant que l'utilisateur n'est pas déjà enregistré
   User.findOne({
-    username:{ $regex: new RegExp(`/^${req.body.username}$/`, "i") },
+    username: { $regex: new RegExp(`/^${req.body.username}$/`, "i") },
     email: { $regex: new RegExp(req.body.email, "i") }, // 
   }).then((data) => {
     if (data === null) {
@@ -40,7 +40,7 @@ router.post("/signup", (req, res) => {
       newUser.save().then((newDoc) => {
         res.json({ result: true, token: newDoc.token });
         return; // ajout d'un return à CHAQUE réponse pour empêcher réponses multiples
-      }); 
+      });
     } else {
       // Si l'utilisateur existe déjà, nous retournons une réponse à false.
       res.json({ result: false, error: "User already registered" });
@@ -73,6 +73,7 @@ router.post("/signin", (req, res) => {
   });
 });
 
+//A checker mais doit etre supprimé car redondance et mal concue
 router.delete("/delete", (req, res) => {
   User.deleteOne({ username: User.username }).then(() => {
     res.json({ result: true });
@@ -164,7 +165,7 @@ router.delete("/:username", (req, res) => {
     })
 })
 
-router.get("/:token", (req,res)=>{
+router.get("/:token", (req, res) => {
   User.findOne({
     token: { $regex: new RegExp(req.params.token, "i") },
   }).then(data => {
