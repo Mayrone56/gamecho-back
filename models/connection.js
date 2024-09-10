@@ -6,6 +6,6 @@ const connectionString = process.env.CONNECTION_STRING
 // set it as an env.
 
 mongoose.connect(connectionString, { connectTimeoutMS: 2000 })
-  .then(() => console.log('Database connected'))
+  .then(() => console.log('Database Gamecho connected'))
 
   .catch(error => console.error(error));
