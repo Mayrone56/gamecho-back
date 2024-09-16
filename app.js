@@ -4,7 +4,6 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 
-const fileUpload = require("express-fileupload");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
@@ -16,6 +15,12 @@ var app = express();
 
 const cors = require('cors');
 app.use(cors());
+// app.use(cors({
+//     origin: 'http://localhost:3001',
+//     methods: ['GET', 'POST', 'PUT', 'DELETE'],
+//     allowedHeaders: ['Content-Type', 'Authorization'],
+//     credentials: true, // si tu utilises des cookies ou l'authentification basée sur des sessions
+// }));
 
 // const https = require('https'); // nouveau module pour créer des serveurs et des clients HTTPS
 // const fs = require('fs'); // "file system", module pour opération de lecture/d'écriture de fichiers nécessaires aux certificats SSL/TLS.
@@ -32,6 +37,7 @@ app.use(cors());
 //   res.send('Hello HTTPS World!');
 // });
 
+const fileUpload = require("express-fileupload");
 app.use(fileUpload());
 
 app.use(logger("dev"));
