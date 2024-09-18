@@ -3,6 +3,7 @@ var router = express.Router();
 require("../models/connection");
 
 const User = require("../models/users");
+const Game = require("../models/games");
 
 const { checkBody } = require("../modules/checkBody");
 const bcrypt = require("bcrypt");
@@ -11,7 +12,7 @@ const uid2 = require("uid2");
 // Nous vérifions ici que tous les champs soient bien remplis afin que l'inscription utilisateur soit possible.
 router.post("/signup", (req, res) => {
   if (!checkBody(req.body, ["username", "email", "password"])) {
-    res.json({ result: "false", error: "Missing or empty fields" });
+    res.json({ result: false, error: "Missing or empty fields" });
     return; // ajout d'un return à CHAQUE réponse pour empêcher réponses multiples
   }
 
@@ -178,8 +179,60 @@ router.get("/:token", (req, res) => {
 })
 
 /* GET users listing. */
-// router.get('/', function(req, res, next) {
-//   res.send('respond with a resource');
-// });
+router.get('/', function (req, res, next) {
+  res.send('respond with a resource');
+});
+
+//TEST Whishlit
+router.post('/users/:userId/wishlist', async (req, res) => {
+  const { userId } = req.params;
+  const {
+    username,
+    gameName,
+    gameDetails,
+  } = req.body;
+
+  try {
+    // Trouver l'utilisateur par ID
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Trouver le jeu dans la collection games par son ID
+    const game = await Game.findById(gameId);
+    if (!game) {
+      return res.status(404).json({ success: false, message: 'Game not found' });
+    }
+
+    // Vérifier si le jeu est déjà dans la wishlist de l'utilisateur
+    const isGameInWishlist = user.wishlist.some(gameRef => gameRef.equals(gameId));
+    if (isGameInWishlist) {
+      return res.status(400).json({ success: false, message: 'Game already in wishlist' });
+    }
+
+    // Ajouter le jeu à la wishlist de l'utilisateur
+    user.wishlist.push(game._id);
+    await user.save();
+
+    res.json({ success: true, message: 'Game added to wishlist', wishlist: user.wishlist });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.delete('/users/:userId/wishlist', async (req, res) => {
+  const { userId } = req.params;
+  const { gameId } = req.body;
+  try {
+    // Code pour retirer le jeu de la wishlist de l'utilisateur dans la BDD
+    const user = await User.findById(userId);
+    user.wishlist = user.wishlist.filter((game) => game.gameId !== gameId);
+    await user.save();
+    res.json({ success: true, message: 'Game removed from wishlist' });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+});
 
 module.exports = router;

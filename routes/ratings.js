@@ -5,7 +5,8 @@ const Rating = require("../models/ratings");
 const User = require("../models/users");
 
 router.post("/save", async (req, res) => {
-  const { // destructuration
+  // destructuration
+  const {
     username,
     gameName,
     rating,

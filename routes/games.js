@@ -13,21 +13,24 @@ router.get("/latestreleased", async (req, res) => {
   const currentDate = moment().format("YYYY-MM-DD");
   // Obtention de la date d'il y a 45 jours.
   const oldDate = moment().subtract(45, "days").format("YYYY-MM-DD");
+  // console.log("OLDDATE", oldDate);
 
   // Requête à l'API pour rechercher les derniers jeux sortis les 45 derniers jours
+  //Le query parameter "metacritic" permet de filtrer les résultats les plus pertinents sur Metacritic
   const datedGames = await fetch(
     `https://api.rawg.io/api/games?key=${API_KEY}&dates=${oldDate},${currentDate}&megacritic=85,100&page_size=20`
   );
 
   const latestgames = await datedGames.json();
+  console.log("LATESTGAMES", latestgames);
 
   // Extraction de la clé ID pour fetcher la route qui détaille les jeux
   const gameIDs = latestgames.results.map((game) => game.id); // plus besoin de la méthode slice, le fetch ne retient que dix jeux
-  //console.log(gameIDs);
+  // console.log("GAMEIDS", gameIDs);
 
   const savedGames = []; // tableau vide composé en aval des résultats pertinents
 
-  // loop à l'aide de chaque ID extrait les détails
+  // Loop fait sur le tableau gameIDs à l'aide de chaque ID extrait les détails
   for (const gameID of gameIDs) {
     const gameDetailsResponse = await fetch(
       `https://api.rawg.io/api/games/${gameID}?key=${API_KEY}`
@@ -39,47 +42,50 @@ router.get("/latestreleased", async (req, res) => {
       continue;
     }
 
+    // LA VRAIE DIFFICULTE
     const formattedGames = {
-      // LA VRAIE DIFFICULTE
       name: game.name || "", //  comporateur logique "||" qui revient à OR donc game.name OR ""
       description: game.description || "",
       developer:
+        // possibilité d'avoir plusieurs développeurs/éditeurs / Si présence d'au moins un, on récupère seulement le premier via l'index [O]
         game.developers && game.developers.length > 0
-          ? game.developers[0].name // possibilité d'avoir plusieurs développeurs/éditeurs / Si présence d'au moins un, on récupère seulement le premier via l'index [O]
+          ? game.developers[0].name
           : "",
+      // même principe que developers
       publisher:
-        game.publishers && game.publishers.length > 0 // même principe que developers
+        game.publishers && game.publishers.length > 0
           ? game.publishers[0].name
           : "",
       releasedDate: game.released || "",
+      // après avoir fait le tour du tableau, on obtient une string jointe avec tous les éléments
       platforms: game.platforms
-        ? game.platforms.map((platform) => platform.platform.name).join(", ") // après avoir fait le tour du tableau, on obtient une string jointe avec tous les éléments
+        ? game.platforms.map((platform) => platform.platform.name).join(", ")
         : "",
       genre: game.genres
         ? game.genres.map((genre) => genre.name).join(", ") // même principe
         : "",
       // très perfectible, l'API contient plusieurs tags mais n'est pas correcte pour beaucoup de jeux
       isMultiplayer:
-        game.tags && // veut dire en Clean Code = // if (game.tags) {game.tags.some .......}
-        game.tags.some((tag) => tag.name.toLowerCase().includes("multiplayer")), // on cherche simplement un champ multiplayer sans être sensible à la casse
-      // pareil que pour isMultiplayer
+        // veut dire en Clean Code = // if (game.tags) {game.tags.some .......}
+        // on cherche simplement un champ multiplayer sans être sensible à la casse
+        game.tags && game.tags.some((tag) => tag.name.toLowerCase().includes("multiplayer")),
       isOnline:
-        game.tags &&
-        game.tags.some((tag) => tag.name.toLowerCase().includes("online")),
-      isExpandedContent: game.additions ? true : false, // on explicite le booléen pour qu'il soit prêt à être importé selon le modèle dans la BDD dans une route POST
-      expandedContentList: game.additions
-        ? game.additions.map((expandedContent) => ({
-          // map parce que possibilité d'avoir plusieurs DLC / extensions donc plusieurs tableaux
-          description: expandedContent.description || "",
-          name: expandedContent.name || "",
-          releasedDate: expandedContent.released || "",
-          ratingsID: [], // clé étrangère à définir lors d'un vote
-          imageGame: expandedContent.background_image || "",
-          ratingSummary: {
-            averageRating: 0, // À calculer lors d'un vote
-            numberOfRatings: 0, // À calculer lors d'un vote
-          },
-        }))
+        // pareil que pour isOnline
+        game.tags && game.tags.some((tag) => tag.name.toLowerCase().includes("online")),
+      // on explicite le booléen pour qu'il soit prêt à être importé selon le modèle dans la BDD dans une route POST
+      isExpandedContent: game.additions ? true : false,
+      // map parce que possibilité d'avoir plusieurs DLC / extensions donc plusieurs tableaux
+      expandedContentList: game.additions ? game.additions.map((expandedContent) => ({
+        description: expandedContent.description || "",
+        name: expandedContent.name || "",
+        releasedDate: expandedContent.released || "",
+        ratingsID: [], // clé étrangère à définir lors d'un vote
+        imageGame: expandedContent.background_image || "",
+        ratingSummary: {
+          averageRating: 0, // À calculer lors d'un vote
+          numberOfRatings: 0, // À calculer lors d'un vote
+        },
+      }))
         : [],
       imageGame: game.background_image || "",
       ratingSummary: {
@@ -125,7 +131,7 @@ router.post('/saveGame', (req, res) => {
   })
 });
 
-// SECTION DERNIERS JEUX
+// SECTION SEARCH
 
 router.get("/search", async (req, res) => {
   // Extrait la requête de recherche à partir des paramètres d'URL
