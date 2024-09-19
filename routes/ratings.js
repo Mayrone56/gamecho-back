@@ -35,25 +35,26 @@ router.post("/save", async (req, res) => {
   let game = await Game.findOne({ name: gameName });
 
   // S'il n'existe pas, on va créer un nouveau document dans la collection games
+  // gameDetails suffit à renseigner tous les champs puisqu'ils ont été formatés en amont dans les routes games
+  // utilisation du spread operator ... pour être sûr que tous les champs du tableau soient renvoyés
+  // génération automatique d'un ID qu'on a pas besoin de renseigner à la création d'un nouveau document
+  // le champ _id sera cependant nécessaire pour lier le vote au jeu nouvellement créé
   if (!game) {
-    game = new Game({ ...gameDetails, ratingsID: [] }); // gameDetails suffit à renseigner tous les champs puisqu'ils ont été formatés en amont dans les routes games
-    // utilisation du spread operator ... pour être sûr que tous les champs du tableau soient renvoyés
-    // génération automatique d'un ID qu'on a pas besoin de renseigner à la création d'un nouveau document
-    // le champ _id sera cependant nécessaire pour lier le vote au jeu nouvellement créé
+    game = new Game({ ...gameDetails, ratingsID: [] });
 
     console.log("New game created !", game);
   }
-  // étape supplémentaire ajoutée le 29 mai 2024
-  //
+  // on cherche un rating lié à un utilisateur ET le jeu noté
   const previousRating = await Rating.findOne({
     user: user._id,
     game: game._id,
-  }); // on cherche un rating lié à un utilisateur ET le jeu noté
+  });
 
-  let newRating; // on déclare la variable en let pour lui assigner une valeur dans la condition => permet l'exploitation de la valeur en dehors du scope (de l'échelle ?) de la condition
+  // on déclare la variable en let pour lui assigner une valeur dans la condition => permet l'exploitation de la valeur en dehors du scope de la condition
+  let newRating;
 
+  // si l'utilateur a voté, on met à jour toutes les valeurs de ce vote avec les données du req.body
   if (previousRating) {
-    // si l'utilateur a voté, on met à jour toutes les valeurs de ce vote avec les données du req.body
     previousRating.rating = rating; // le previousRating cible le vote trouvé dans la BDD
     previousRating.ratingMode = ratingMode;
     previousRating.comment = comment;

@@ -103,11 +103,11 @@ router.get("/latestreleased", async (req, res) => {
   res.json({ result: true, latestgames: savedGames });
 });
 
-
+//Permet de recuperer via le populate les ratings d'un jeu
 router.get('/ratings', (req, res) => {
 
   const { name } = req.query
-  console.log(name);
+  console.log("router get /RATINGS", name);
   Game.findOne({ name: name })
     .populate({ path: 'ratingsID', populate: { path: 'user' } })
     .then(data => {
