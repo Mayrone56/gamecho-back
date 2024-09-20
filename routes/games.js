@@ -111,6 +111,7 @@ router.get('/ratings', (req, res) => {
   Game.findOne({ name: name })
     .populate({ path: 'ratingsID', populate: { path: 'user' } })
     .then(data => {
+      console.log("DATA OF RATINGS WITH QUERY NAME", data)
       if (!data) {
         res.json({ result: false, erreur: "Game not found" });
       } else

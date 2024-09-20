@@ -4,6 +4,8 @@ const Game = require("../models/games");
 const Rating = require("../models/ratings");
 const User = require("../models/users");
 
+//Pour ameliorer la securité on pourrait ajouter le token en params comme pour le delete
+//Et faire un find.User par toek au lieu de username
 router.post("/save", async (req, res) => {
   // destructuration
   const {
@@ -65,7 +67,7 @@ router.post("/save", async (req, res) => {
     // sinon, création d'un nouveau rating avec les données récupérées
 
     // Création du vote avec l'hypothèse que les champs correspondent aux noms des valeurs renseignées côté frontend
-    newRating = await new Rating({
+    newRating = new Rating({
       user: user._id, // le lien avec les IDs respectifs se fait ici pour assurer l'uniformisation des données / éviter les doublons
       game: game._id, // même chose
       rating,
@@ -90,7 +92,6 @@ router.post("/save", async (req, res) => {
     user.ratings.push(newRating._id); // même procédure que pour la sauvegarde de l'ID du rating dans la collection jeu : on pousse dans un tableau l'élément
     await user.save();
     console.log("User ratings updated !", user);
-    return newRating;
   }
   // Message de confirmation
   console.log("Rating saved successfully");
@@ -118,6 +119,33 @@ router.post("/save", async (req, res) => {
 router.delete('/:token/:name', (req, res) => {
   //ETAPE 2 - Trouver le user à qui appartient le token car il ne faut pas tranferer les id en front, que ce soit pour le user ou n'importe quoi d'autre
 
+  /*
+  Comme pour Promise.all on pourrait optimiser avec une seule promesse pour rechercher dans les 3 collections :
+
+  Promise.all([
+    User.findOne({ token: req.params.token }),
+    Game.findOne({ name: req.params.name }),
+    Rating.findOne({ user: user._id, game: game._id })
+  ]).then(([user, game, rating])=> {
+    if (user === null) {
+      res.json({ result: false, error: 'User not found' });
+      return;
+    }
+
+    if (game === null) {
+      res.json({ result: false, error: "Game not found" });
+      return;
+    }
+
+    if (rating === null) {
+      res.status(404).json({ result: false, error: "Rating not found" });
+      return;
+    }
+
+    ...
+  })
+  */
+
   User.findOne({ token: req.params.token }).then(user => { //On cherche dans User qui est le nom du schema le token
     //Si le user n'existe pas on renvoie une erreur et on arrete le code avec return
     if (user === null) {
@@ -133,18 +161,41 @@ router.delete('/:token/:name', (req, res) => {
           //console.log("USER + GAME ", user._id, game._id)
           //Se base sur les id de user et game
 
-          //ETAPE 3
-          Rating.deleteOne({ user: user._id, game: game._id })
-            .then(deleteRating => {
-              console.log("DELETERATING ", deleteRating)
-              if (deleteRating.deletedCount > 0) {
+          Rating.findOne({ user: user._id, game: game._id }).then(rating => {
+            if (!rating) {
+              res.json({ result: false, error: "Rating not found" });
+              return;
+            }
+            //On filtre pour supprimer celui qu'on vient de trouver
+            if (game.ratingsID) {
+              game.ratingsID = game.ratingsID.filter(id => id.toString() !== rating._id.toString());
+            }
+
+            //On filtre pour supprimer celui qu'on vient de trouver aussi
+            // clean code pour s'assurer que user.ratings n'est pas undefined
+            console.log("before: user ratings length: ", (user.ratings || []).length);
+
+            user.ratings = (user.ratings || []).filter(id => id.toString() !== rating._id.toString());
+
+            console.log("afeter: user ratings length: ", (user.ratings || []).length);
+
+            // Permet de lancer autant d'operations async qu'on veut s'il elles sont independantes les unes des autres
+            // Et de recevoir les 3 resultats en meme temps dans l'argument tableau de then  
+            Promise
+              .all([
+                game.save(),
+                user.save(),
+                rating.deleteOne(),
+              ])
+              .then(() => {
                 res.json({ result: true })
                 return;
-              }
-              else {
-                res.json({ result: false, error: "Rating" });
-              }
-            });
+              })
+              .catch(err => {
+                res.json({ result: false, error: err });
+              })
+
+          });
         }
       })
     }

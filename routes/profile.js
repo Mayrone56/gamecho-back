@@ -1,3 +1,4 @@
+// VAL
 var express = require("express");
 var router = express.Router();
 const cloudinary = require("cloudinary").v2; // ATTENTION, lien cloudinary à renseigner dans .env
@@ -28,3 +29,44 @@ router.post("/avatar", async (req, res) => {
 });
 
 module.exports = router;
+
+
+// var express = require("express");
+// var router = express.Router();
+// const multer = require('multer');
+// const cloudinary = require('cloudinary').v2;
+// const { CloudinaryStorage } = require('multer-storage-cloudinary');
+
+// // Configurer Cloudinary
+// cloudinary.config({
+//   cloud_name: 'your_cloud_name',
+//   api_key: 'your_api_key',
+//   api_secret: 'your_api_secret',
+// });
+
+// // Stockage Multer pour Cloudinary
+// const storage = new CloudinaryStorage({
+//   cloudinary: cloudinary,
+//   params: {
+//     folder: 'avatars',
+//     format: async (req, file) => 'png', // ou 'jpg', etc.
+//     public_id: (req, file) => file.originalname,
+//   },
+// });
+
+// const upload = multer({ storage: storage });
+
+// // Route pour uploader l'avatar
+// app.post('/api/upload-avatar', upload.single('avatar'), (req, res) => {
+//   if (!req.file) {
+//     return res.status(400).json({ message: 'No file uploaded' });
+//   }
+
+//   const avatarUrl = req.file.path; // URL Cloudinary de l'image
+//   // Sauvegarder l'URL de l'image dans MongoDB (via Mongoose)
+//   User.findByIdAndUpdate(req.user.id, { avatar: avatarUrl }, { new: true })
+//     .then((user) => res.json({ url: user.avatar }))
+//     .catch((err) => res.status(500).json({ error: err.message }));
+// });
+
+// module.exports = router;
