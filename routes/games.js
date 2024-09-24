@@ -43,11 +43,14 @@ router.get("/latestreleased", async (req, res) => {
     }
 
     // LA VRAIE DIFFICULTE
+    // Sert à formater les données obtenues pour les structurer d'une manière plus propre et être utilisée
+    // || "" permet de gérer les valeurs manquantes et éviter que l'app crash
+    // Permet de créer un objet uniformiser avec des clefs valeurs spécifiques afin d'etre exploitées côté frontend ou vers la bdd
     const formattedGames = {
       name: game.name || "", //  comporateur logique "||" qui revient à OR donc game.name OR ""
       description: game.description || "",
+      // possibilité d'avoir plusieurs développeurs/éditeurs / Si présence d'au moins un, on récupère seulement le premier via l'index [O]
       developer:
-        // possibilité d'avoir plusieurs développeurs/éditeurs / Si présence d'au moins un, on récupère seulement le premier via l'index [O]
         game.developers && game.developers.length > 0
           ? game.developers[0].name
           : "",
@@ -66,15 +69,18 @@ router.get("/latestreleased", async (req, res) => {
         : "",
       // très perfectible, l'API contient plusieurs tags mais n'est pas correcte pour beaucoup de jeux
       isMultiplayer:
-        // veut dire en Clean Code = // if (game.tags) {game.tags.some .......}
+        // veut dire en Clean Code = // if (game.tags) alors {game.tags.some .......}
         // on cherche simplement un champ multiplayer sans être sensible à la casse
         game.tags && game.tags.some((tag) => tag.name.toLowerCase().includes("multiplayer")),
       isOnline:
         // pareil que pour isOnline
         game.tags && game.tags.some((tag) => tag.name.toLowerCase().includes("online")),
       // on explicite le booléen pour qu'il soit prêt à être importé selon le modèle dans la BDD dans une route POST
+      // Définie à true si le jeu a des contenus additionnels, sinon false
       isExpandedContent: game.additions ? true : false,
       // map parce que possibilité d'avoir plusieurs DLC / extensions donc plusieurs tableaux
+      // Si le jeu possède des contenus additionnels alors on crée une liste d'objets décrivant chacun de ces contenus (avec leur nom, description, image...)
+      // Sinon on renvoie un tableau vide
       expandedContentList: game.additions ? game.additions.map((expandedContent) => ({
         description: expandedContent.description || "",
         name: expandedContent.name || "",
@@ -87,7 +93,9 @@ router.get("/latestreleased", async (req, res) => {
         },
       }))
         : [],
+      // Récupère le bg du jeu, ou une chaîne vide si elle est absente
       imageGame: game.background_image || "",
+      //Resumé des évaluations avec une moyenne et le total, sera calculé plus tard
       ratingSummary: {
         averageRating: 0, // À calculer lors d'un vote
         numberOfRatings: 0, // À calculer lors d'un vote
@@ -103,7 +111,9 @@ router.get("/latestreleased", async (req, res) => {
   res.json({ result: true, latestgames: savedGames });
 });
 
-//Permet de recuperer via le populate les ratings d'un jeu
+// Permet de recuperer via le populate les ratings d'un jeu
+// Le name du jeu est récupéré dans les query que l'on retrouve côté front dans le fetch
+// On utilise le query parameters pour filtrer une recherche, elle ne sont pas obligatoire contrairement aux params qui sont plus adapté pour chercher un id par exemple
 router.get('/ratings', (req, res) => {
 
   const { name } = req.query
@@ -119,6 +129,7 @@ router.get('/ratings', (req, res) => {
     });
 });
 
+//Route qui n'est pour le moment pas exploitée côté front
 router.post('/saveGame', (req, res) => {
   const gameData = req.body; // The game details should be sent in the request body
 
@@ -270,7 +281,7 @@ router.get("/suggestions", async (req, res) => {
     });
   }
 
-  // Take the first relevant game found
+  // Prend le premier jeu pertinent trouvé
   const targetGame = gameSearchData.results[0];
   const targetGameId = targetGame.id;
 
@@ -318,6 +329,7 @@ router.get("/suggestions", async (req, res) => {
   const similarByPlatform = await fetchGames(similarByPlatformUrl);
 
   // Combine similar games from all sources
+  // Ce tableau peut contenir des doublons, il faut donc les filtrer et seront stcokés dans uniqueGames
   const allSimilarGames = [
     ...similarByGenre,
     ...similarByTags,
@@ -326,22 +338,25 @@ router.get("/suggestions", async (req, res) => {
     ...similarByPlatform,
   ];
 
+  //Boucle sur le tableau précédent
   const uniqueGameIds = [];
   const uniqueGames = [];
   for (const game of allSimilarGames) {
+    // Vérifie si l'ID du jeu actuel n'est pas déjà présent dans uniqueGameIds, pour ne pas ajouter le meme jeu plusieurs fois
+    // On limite le nombre de jeux suggérés à 10
+    // Si les conditions sont respectées alors on ajoute le jeu à uniqueGame
     if (!uniqueGameIds.includes(game.id) && uniqueGameIds.length < 10) {
       uniqueGameIds.push(game.id);
       uniqueGames.push(game);
+      // Si le jeu n'a pas d'image il est ignoré
+      // Le if ne semble pas utile, verifier plus tard s'il faut enlever, car il ne peut pas y avoir de background image sur uniqueGameIds vu que c'est un tableau et qu'il faut en plus avoir fetch l'id du jeu en amont pour obtenir le bg
       if (!uniqueGameIds.background_image || !uniqueGames.background_image) {
         continue;
       }
     }
   }
 
-
-
-
-  // Fetch detailed information for each unique game
+  // Permet de recuperer le détails de chaque jeu comme pour les autres routes
   const detailedGames = [];
   for (const gameId of uniqueGameIds) {
     const gameDetailsResponse = await fetch(
@@ -352,7 +367,7 @@ router.get("/suggestions", async (req, res) => {
   }
 
 
-  // Format the suggestions
+  // Formattage the suggestions
   const formattedSuggestions = detailedGames.map((game) => ({
     name: game.name,
     description: game.description_raw || game.description,
